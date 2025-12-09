@@ -453,7 +453,29 @@ document.getElementById('backBtn').addEventListener('click', () => {
     document.getElementById('pagination').style.display = 'none';
     document.getElementById('backBtn').style.display = 'none';
     document.getElementById('plantSelection').style.display = 'block';
+    
+    // ✅ รีเซ็ตตัวแปรทั้งหมด
+    allData = [];
+    filteredData = [];
+    mode = "all";
+    abcFilter = "";
+    movingFilter = "";
+    statusFilter = "";
+    currentPage = 1;
+    
+    // ✅ รีเซ็ต Plant Filter ให้เลือกได้อีกครั้ง
+    const plantFilter = document.getElementById("plantFilter");
+    plantFilter.disabled = false;
+    
+    // ✅ รีเซ็ตค่าอื่นๆ
+    document.getElementById("searchInput").value = "";
+    document.getElementById("statusFilter").value = "";
 });
+function updateHeaderTitle() {
+    const header = document.querySelector("h1");
+    const plantName = plantNames[selectedPlant] || selectedPlant;
+    header.innerHTML = `ABC Analysis & Smart Ordering System - Plant ${selectedPlant} (${plantName})`;
+}
 async function loadData() {
     const loader = document.getElementById("loader");
     const summarySection = document.getElementById("summarySection");
@@ -464,6 +486,7 @@ async function loadData() {
     controlsSection.style.display = "none";
     tableSection.style.display = "none";
     try {
+        // ✅ ดึงข้อมูลเฉพาะ Plant ที่เลือก
         const [invRes, usageRes, mainsapRes, avgValRes, statusRes] = await Promise.all([
             fetch(inventoryUrl),
             fetch(usageUrl),
@@ -471,6 +494,7 @@ async function loadData() {
             fetch(avgValUrl),
             fetch(statusUrl)
         ]);
+        
         const inv = await invRes.json();
         const usage = await usageRes.json();
         const mainsap = await mainsapRes.json();
@@ -649,12 +673,13 @@ async function loadData() {
         });
         // ✅ สร้าง allData โดยใช้ข้อมูลจาก inventoryUrl เป็นหลัก
         allData = [];
-       
+        
         inv.forEach(r => {
             const plant = (r.Plant || '').toString().trim();
             const material = (r.Material || '').toString().trim();
-           
-            if (plant && material) {
+            
+            // ✅ กรองเฉพาะ Plant ที่เลือก
+            if (plant === selectedPlant && material) {
                 const key = `${plant}-${material}`;
                
                 // ✅ หาข้อมูลการเบิก
@@ -750,66 +775,57 @@ async function loadData() {
                 });
             }
         });
-        // ✅ ตรวจสอบข้อมูลตัวอย่าง
-        console.log(`=== สรุปข้อมูล ===`);
+        
+        console.log(`=== สรุปข้อมูล Plant: ${selectedPlant} ===`);
         console.log(`สร้าง allData สำเร็จ: ${allData.length} รายการ`);
-       
-        if (allData.length > 0) {
-            console.log("ตัวอย่างข้อมูล allData 5 รายการแรก:");
-            allData.slice(0, 5).forEach((item, index) => {
-                console.log(`${index + 1}. ${item.Plant}-${item.Material}:`, {
-                    Description: item.Description,
-                    StorageBin: item.StorageBin,
-                    Unit: item.Unit,
-                    Status: item.Status || "(ไม่มีสถานะ)",
-                    Qty4Month: item.Qty4Month,
-                    Value: item.Value
-                });
-            });
-           
-            // นับจำนวนรายการที่มี Status
-            const withStatus = allData.filter(item => item.Status && item.Status.trim() !== '');
-            console.log(`จำนวนรายการที่มีข้อมูล Status: ${withStatus.length}/${allData.length}`);
-           
-            // แสดงสถานะต่างๆ ที่มี
-            const statusCounts = {};
-            allData.forEach(item => {
-                const status = item.Status && item.Status.trim() !== '' ? item.Status : 'ไม่มีสถานะ';
-                statusCounts[status] = (statusCounts[status] || 0) + 1;
-            });
-            console.log("จำนวนรายการตามสถานะ:", statusCounts);
-           
-            // สร้างรายการสถานะ unique สำหรับ dropdown
-            const uniqueStatuses = [...new Set(allData.map(item => item.Status).filter(s => s && s.trim() !== ''))].sort();
-            console.log("สถานะต่างๆ ที่พบ:", uniqueStatuses);
-           
-            // อัปเดต dropdown status filter
-            const statusFilterSelect = document.getElementById("statusFilter");
-            statusFilterSelect.innerHTML = '<option value="">ทุกสถานะ</option>';
-            uniqueStatuses.forEach(status => {
-                statusFilterSelect.add(new Option(status, status));
-            });
-            // เพิ่มตัวเลือกสำหรับไม่มีสถานะ
-            if (statusCounts['ไม่มีสถานะ'] > 0) {
-                statusFilterSelect.add(new Option('ไม่มีสถานะ', 'ไม่มีสถานะ'));
-            }
-        }
+        
+        // ✅ คำนวณ ABC จากข้อมูลเฉพาะ Plant
         calcABCValue();
-        fillPlantDropdown();
+        
+        // ✅ เติม dropdown Plant Filter เฉพาะ Plant ที่เลือก
+        const plantFilter = document.getElementById("plantFilter");
+        plantFilter.innerHTML = '';
+        
+        // ✅ เพิ่มเฉพาะ Plant ที่เลือก
+        const name = plantNames[selectedPlant] || selectedPlant;
+        plantFilter.add(new Option(`${selectedPlant} - ${name}`, selectedPlant));
+        
+        // ✅ ปิดการใช้งาน Plant Filter (ไม่ให้เปลี่ยน Plant ได้)
+        plantFilter.disabled = true;
+        
+        // ✅ เติมข้อมูล Status Filter แบบ Unique
+        populateStatusFilter();
+        
+        // ✅ แสดงปุ่ม Upload (ถ้ามี sheetId สำหรับ Plant นี้)
+        const uploadBtn = document.getElementById("uploadBtn");
+        if (sheetIds[selectedPlant]) {
+            const sheetId = sheetIds[selectedPlant];
+            const gasUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+            uploadBtn.href = gasUrl;
+            uploadBtn.style.display = "flex";
+        } else {
+            uploadBtn.style.display = "none";
+        }
+        
+        // ✅ ตั้งค่าเริ่มต้นและคำนวณ
         setDefaultAndCalculate();
+        
         loader.style.display = "none";
         document.getElementById("mainCardsSection").style.display = "flex";
         summarySection.style.display = "flex";
         controlsSection.style.display = "flex";
         tableSection.style.display = "block";
         document.getElementById("pagination").style.display = "block";
+        
     } catch (e) {
         loader.style.display = "none";
         alert("โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรช");
         console.error("เกิดข้อผิดพลาด:", e);
     }
 }
+
 function calcABCValue() {
+    // ✅ คำนวณ ABC จากข้อมูลทั้งหมด (ซึ่งเป็นข้อมูลของ Plant ที่เลือกอยู่แล้ว)
     const sorted = [...allData].sort((a,b) => b.Value - a.Value);
     const total = sorted.reduce((s,r) => s + r.Value, 0);
     let cum = 0;
@@ -822,6 +838,10 @@ function calcABCValue() {
             orig.ABCValue = pct <= 70 ? "A" : pct <= 90 ? "B" : "C";
         }
     });
+    
+    console.log(`=== สรุป ABC สำหรับ Plant: ${selectedPlant} ===`);
+    console.log(`มูลค่ารวม: ${formatCurrency(total)}`);
+    console.log(`จำนวนรายการ: ${allData.length}`);
 }
 function recalculateStockFields(data, params) {
     data.forEach(r => {
@@ -882,17 +902,26 @@ function recalculateStockFields(data, params) {
 }
 function fillPlantDropdown() {
     const sel = document.getElementById("plantFilter");
-    const plants = [...new Set(allData.map(r => r.Plant))].filter(Boolean).sort();
     sel.innerHTML = '<option value="">ทุก Plant</option>';
-    plants.forEach(p => sel.add(new Option(p, p)));
+    
+    // ✅ เติมเฉพาะ Plant ที่เลือก (เพื่อแสดงใน dropdown)
+    const name = plantNames[selectedPlant] || selectedPlant;
+    sel.add(new Option(`${selectedPlant} - ${name}`, selectedPlant));
 }
 function setDefaultAndCalculate() {
-    const plantFilter = document.getElementById("plantFilter");
-    plantFilter.value = selectedPlant;
-    plantFilter.dispatchEvent(new Event('change'));
-
+    // ✅ ไม่ต้องตั้งค่า plantFilter อีก (ถูกตั้งค่ามาแล้วจาก loadData)
+    // ✅ เคลียร์ฟิลเตอร์อื่นๆ
     document.getElementById("statusFilter").value = "";
-    mode = "all"; abcFilter = ""; movingFilter = ""; statusFilter = "";
+    document.getElementById("searchInput").value = "";
+    mode = "all"; 
+    abcFilter = ""; 
+    movingFilter = ""; 
+    statusFilter = "";
+    
+    // ✅ เติมข้อมูล Status Filter อีกครั้ง (เพื่อให้แน่ใจว่าเป็นปัจจุบัน)
+    populateStatusFilter();
+    
+    // ✅ เรียกใช้การคำนวณ
     applyFiltersAndRender();
 }
 document.getElementById("tableHeader").addEventListener("click", function(e) {
@@ -908,13 +937,17 @@ document.getElementById("tableHeader").addEventListener("click", function(e) {
     applyFiltersAndRender();
 });
 function applyFiltersAndRender() {
+    // ✅ เริ่มจากข้อมูลทั้งหมด (ซึ่งเป็นข้อมูลของ Plant ที่เลือกอยู่แล้ว)
     let data = [...allData];
-    const plant = document.getElementById("plantFilter").value;
-    if (plant) data = data.filter(r => r.Plant === plant);
-   
+    
     const search = document.getElementById("searchInput").value.toLowerCase();
-    if (search) data = data.filter(r => r.Material.toLowerCase().includes(search) || r.Description.toLowerCase().includes(search));
-   
+    if (search) {
+        data = data.filter(r => 
+            r.Material.toLowerCase().includes(search) || 
+            r.Description.toLowerCase().includes(search)
+        );
+    }
+    
     const statusFilterVal = document.getElementById("statusFilter").value;
     if (statusFilterVal) {
         if (statusFilterVal === "ไม่มีสถานะ") {
@@ -923,26 +956,61 @@ function applyFiltersAndRender() {
             data = data.filter(r => r.Status === statusFilterVal);
         }
     }
-   
+    
     const params = {
         leadTime: parseInt(document.getElementById("leadTimeDays").value) || 5,
         safety: parseInt(document.getElementById("safetyDays").value) || 3,
         cover: parseInt(document.getElementById("coverDays").value) || 40
     };
-   
+    
     recalculateStockFields(data, params);
-    let baseData = [...data];
-   
-    if (mode === "onlyOrder") data = data.filter(r => Math.round(r.RecommendedOrder) >= 1);
-    else if (mode === "returnable") data = data.filter(r => r.ReturnQty > 0);
-    else if (mode === "afterReturn") data = data.map(r => ({...r, Unrestricted: r.Unrestricted - r.ReturnQty, Value: r.Value - r.ReturnValue}));
-   
-    if (abcFilter) data = data.filter(r => r.ABCValue === abcFilter);
-    if (movingFilter) data = data.filter(r => r.Moving === movingFilter);
-   
-    data.sort((a,b) => b.Value - a.Value);
+    let baseData = [...data]; // เก็บข้อมูล base สำหรับคำนวณบางส่วน
+    
+    // ✅ กรองตามโหมด
+    if (mode === "onlyOrder") {
+        data = data.filter(r => Math.round(r.RecommendedOrder) >= 1);
+        // คำนวณ ABC ใหม่สำหรับโหมด Order
+        calcABCForMode(data, "order");
+    } else if (mode === "returnable") {
+        data = data.filter(r => r.ReturnQty > 0);
+        // คำนวณ ABC ใหม่สำหรับโหมด OverStock
+        calcABCForMode(data, "return");
+    } else if (mode === "afterReturn") {
+        data = data.map(r => ({...r, Unrestricted: r.Unrestricted - r.ReturnQty, Value: r.Value - r.ReturnValue}));
+        // ใช้ ABC เดิม
+    }
+    
+    // ✅ กรองตาม ABC (ถ้ามีการเลือก Card A/B/C)
+    if (abcFilter) {
+        data = data.filter(r => r.ABCValue === abcFilter);
+    }
+    
+    // ✅ กรองตาม Moving (ถ้ามีการเลือก Card Moving)
+    if (movingFilter) {
+        data = data.filter(r => r.Moving === movingFilter);
+    }
+    
+    // ✅ สำหรับโหมด "all" ให้กรองเฉพาะ Qty6Month > 0
+    if (mode === "all" && abcFilter === "" && movingFilter === "") {
+        data = data.filter(r => r.Qty6Month > 0);
+    }
+    
+    // ✅ เรียงลำดับ
+    if (mode === "onlyOrder") {
+        data.sort((a, b) => {
+            const orderValueA = a.RecommendedOrder * (a.Unrestricted > 0 ? a.Value / a.Unrestricted : 0);
+            const orderValueB = b.RecommendedOrder * (b.Unrestricted > 0 ? b.Value / b.Unrestricted : 0);
+            return orderValueB - orderValueA;
+        });
+    } else if (mode === "returnable") {
+        data.sort((a, b) => b.ReturnValue - a.ReturnValue);
+    } else {
+        data.sort((a, b) => b.Value - a.Value);
+    }
+    
     filteredData = data;
-   
+    
+    // ✅ เรียงลำดับตามการคลิกหัวตาราง
     filteredData.sort((a, b) => {
         let x = a[sortKey] || 0;
         let y = b[sortKey] || 0;
@@ -950,72 +1018,268 @@ function applyFiltersAndRender() {
         if (typeof y === "string") y = y.toLowerCase();
         return sortDir === "asc" ? (x > y ? 1 : -1) : (x < y ? 1 : -1);
     });
-   
+    
     currentPage = 1;
     renderTable();
     renderPagination();
-    updateAllCards(baseData, filteredData);
+    updateAllCards(baseData, filteredData); // ส่ง baseData และ filteredData ไป
+}
+function populateStatusFilter() {
+    const statusFilter = document.getElementById("statusFilter");
+    const currentValue = statusFilter.value;
+    
+    // ล้างตัวเลือกเดิม (เก็บตัวเลือกแรกไว้)
+    statusFilter.innerHTML = '<option value="">ทุกสถานะ</option><option value="ไม่มีสถานะ">ไม่มีสถานะ</option>';
+    
+    // รวบรวมสถานะทั้งหมดจาก allData
+    const statusSet = new Set();
+    allData.forEach(r => {
+        if (r.Status && r.Status.trim() !== "") {
+            statusSet.add(r.Status.trim());
+        }
+    });
+    
+    // แปลง Set เป็น Array และเรียงลำดับ
+    const statusArray = Array.from(statusSet).sort();
+    
+    // เพิ่มแต่ละสถานะลงใน dropdown
+    statusArray.forEach(status => {
+        const option = document.createElement("option");
+        option.value = status;
+        option.textContent = status;
+        statusFilter.appendChild(option);
+    });
+    
+    // คืนค่าที่เลือกเดิม (ถ้ายังมีอยู่)
+    if (currentValue && Array.from(statusFilter.options).some(opt => opt.value === currentValue)) {
+        statusFilter.value = currentValue;
+    }
+}
+function calcABCForMode(data, modeType) {
+    let sorted = [...data];
+    
+    // เรียงตามค่าที่เหมาะสมกับโหมด
+    if (modeType === "order") {
+        sorted.sort((a, b) => {
+            const orderValueA = a.RecommendedOrder * (a.Unrestricted > 0 ? a.Value / a.Unrestricted : 0);
+            const orderValueB = b.RecommendedOrder * (b.Unrestricted > 0 ? b.Value / b.Unrestricted : 0);
+            return orderValueB - orderValueA;
+        });
+    } else if (modeType === "return") {
+        sorted.sort((a, b) => b.ReturnValue - a.ReturnValue);
+    }
+    
+    // คำนวณมูลค่ารวมตามโหมด
+    let total = 0;
+    if (modeType === "order") {
+        total = sorted.reduce((s, r) => {
+            const orderValue = r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+            return s + orderValue;
+        }, 0);
+    } else if (modeType === "return") {
+        total = sorted.reduce((s, r) => s + r.ReturnValue, 0);
+    }
+    
+    let cum = 0;
+    sorted.forEach(r => {
+        let itemValue = 0;
+        if (modeType === "order") {
+            itemValue = r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+        } else if (modeType === "return") {
+            itemValue = r.ReturnValue;
+        }
+        
+        cum += itemValue;
+        const pct = total ? (cum / total) * 100 : 0;
+        
+        // อัปเดตค่า ABC ในข้อมูลเดิม
+        const origIndex = data.findIndex(x => x.Material === r.Material && x.Plant === r.Plant);
+        if (origIndex !== -1) {
+            data[origIndex].CumPercent = pct;
+            data[origIndex].ABCValue = pct <= 70 ? "A" : pct <= 90 ? "B" : "C";
+        }
+    });
+}
+function calcABCForFilteredData(data, modeType) {
+    let sorted = [...data];
+    
+    // ✅ เรียงตามค่าที่เหมาะสมกับโหมด
+    if (modeType === "onlyOrder") {
+        sorted.sort((a, b) => {
+            const orderValueA = a.RecommendedOrder * (a.Unrestricted > 0 ? a.Value / a.Unrestricted : 0);
+            const orderValueB = b.RecommendedOrder * (b.Unrestricted > 0 ? b.Value / b.Unrestricted : 0);
+            return orderValueB - orderValueA;
+        });
+    } else if (modeType === "returnable") {
+        sorted.sort((a, b) => b.ReturnValue - a.ReturnValue);
+    }
+    
+    // ✅ คำนวณมูลค่ารวมตามโหมด
+    let total = 0;
+    if (modeType === "onlyOrder") {
+        total = sorted.reduce((s, r) => {
+            const orderValue = r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+            return s + orderValue;
+        }, 0);
+    } else if (modeType === "returnable") {
+        total = sorted.reduce((s, r) => s + r.ReturnValue, 0);
+    } else {
+        total = sorted.reduce((s, r) => s + r.Value, 0);
+    }
+    
+    let cum = 0;
+    sorted.forEach(r => {
+        let itemValue = 0;
+        if (modeType === "onlyOrder") {
+            itemValue = r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+        } else if (modeType === "returnable") {
+            itemValue = r.ReturnValue;
+        } else {
+            itemValue = r.Value;
+        }
+        
+        cum += itemValue;
+        const pct = total ? (cum / total) * 100 : 0;
+        const orig = data.find(x => x.Material === r.Material && x.Plant === r.Plant);
+        if (orig) {
+            orig.CumPercent = pct;
+            orig.ABCValue = pct <= 70 ? "A" : pct <= 90 ? "B" : "C";
+        }
+    });
 }
 function updateAllCards(baseData, filteredData) {
+    // ✅ ใช้ filteredData สำหรับการคำนวณ ABC และ Moving
+    const dataForABC = filteredData;
+    const dataForMoving = filteredData;
+    
     const abc = {A:0,B:0,C:0}, cntABC = {A:0,B:0,C:0};
     const mov = {Fast:0,Medium:0,Slow:0,Slowly:0,Dead:0}, cntMov = {Fast:0,Medium:0,Slow:0,Slowly:0,Dead:0};
-    let totalStock = 0, orderItems = 0, orderValue = 0, returnCount = 0, totalReturnValue = 0;
-    let total_usage_4m_base = 0;
-    let totalStock_base = 0;
-    let totalReturnValue_base = 0;
-   
-    filteredData.forEach(r => {
-        totalStock += r.Value;
-        abc[r.ABCValue] += r.Value; cntABC[r.ABCValue]++;
-        mov[r.Moving] += r.Value; cntMov[r.Moving]++;
-        const qty = Math.round(r.RecommendedOrder);
-        if (qty > 0) {
-            orderItems++;
-            orderValue += qty * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+    
+    // ✅ คำนวณ ABC จากข้อมูลที่กรองแล้ว (เฉพาะ Plant ที่เลือก)
+    dataForABC.forEach(r => {
+        // ✅ ตรวจสอบเงื่อนไข: Qty6Month > 0 เท่านั้น
+        if (r.Qty6Month <= 0) return;
+        
+        let valueToUse = 0;
+        if (mode === "onlyOrder") {
+            // โหมด Order: ใช้มูลค่าการสั่งซื้อ
+            valueToUse = r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+        } else if (mode === "returnable") {
+            // โหมด OverStock: ใช้มูลค่าส่งคืน
+            valueToUse = r.ReturnValue;
+        } else {
+            // โหมดปกติ: ใช้มูลค่าคงเหลือ
+            valueToUse = r.Value;
         }
-        if (r.ReturnQty > 0) returnCount++;
-        totalReturnValue += r.ReturnValue;
+        
+        abc[r.ABCValue] += valueToUse;
+        cntABC[r.ABCValue]++;
     });
-   
-    baseData.forEach(r => {
-        totalStock_base += r.Value;
-        totalReturnValue_base += r.ReturnValue;
-        if (r.Unrestricted > 0) {
-            const unit_price = r.Value / r.Unrestricted;
-            total_usage_4m_base += r.Qty4Month * unit_price;
+    
+    // ✅ คำนวณ Moving จากข้อมูลที่กรองแล้ว (เฉพาะ Plant ที่เลือก)
+    dataForMoving.forEach(r => {
+        // ✅ ตรวจสอบเงื่อนไข: Qty6Month > 0 เท่านั้น
+        if (r.Qty6Month <= 0) return;
+        
+        let valueToUse = 0;
+        if (mode === "onlyOrder") {
+            valueToUse = r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+        } else if (mode === "returnable") {
+            valueToUse = r.ReturnValue;
+        } else {
+            valueToUse = r.Value;
         }
+        
+        mov[r.Moving] += valueToUse;
+        cntMov[r.Moving]++;
     });
-   
-    const monthly_withdrawal = total_usage_4m_base / 4 || 0;
-    const daily_usage = total_usage_4m_base / 120 || 0;
-    const stock_days = daily_usage > 0 ? Math.round(totalStock_base / daily_usage) : 'N/A';
-    const after_stock_days = daily_usage > 0 ? Math.round((totalStock_base - totalReturnValue_base) / daily_usage) : 'N/A';
-   
-    document.getElementById("totalStockValue").textContent = formatShortCurrency(totalStock);
-    document.getElementById("orderTotalValue").textContent = formatShortCurrency(orderValue);
+    
+    // ✅ อัปเดต Card A/B/C
     document.getElementById("sumA").textContent = formatShortCurrency(abc.A);
     document.getElementById("sumB").textContent = formatShortCurrency(abc.B);
     document.getElementById("sumC").textContent = formatShortCurrency(abc.C);
+    document.getElementById("countA").textContent = cntABC.A + " รายการ";
+    document.getElementById("countB").textContent = cntABC.B + " รายการ";
+    document.getElementById("countC").textContent = cntABC.C + " รายการ";
+    
+    // ✅ อัปเดต Card Moving
     document.getElementById("valFast").textContent = formatShortCurrency(mov.Fast);
     document.getElementById("valMedium").textContent = formatShortCurrency(mov.Medium);
     document.getElementById("valSlow").textContent = formatShortCurrency(mov.Slow);
     document.getElementById("valSlowly").textContent = formatShortCurrency(mov.Slowly);
     document.getElementById("valDead").textContent = formatShortCurrency(mov.Dead);
-    document.getElementById("totalCount").textContent = filteredData.length + " รายการ";
-    document.getElementById("orderItemCount").textContent = orderItems;
-    document.getElementById("returnItemCount").textContent = returnCount + " รายการ";
-    document.getElementById("returnValue").textContent = formatShortCurrency(totalReturnValue);
-    document.getElementById("monthlyWithdrawalValue").textContent = formatShortCurrency(monthly_withdrawal);
-    document.getElementById("stockDaysValue").textContent = stock_days > 9999 ? 'มาก' : stock_days;
-    document.getElementById("afterStockDaysValue").textContent = after_stock_days > 9999 ? 'มาก' : after_stock_days;
-    document.getElementById("countA").textContent = cntABC.A + " รายการ";
-    document.getElementById("countB").textContent = cntABC.B + " รายการ";
-    document.getElementById("countC").textContent = cntABC.C + " รายการ";
     document.getElementById("countFast").textContent = cntMov.Fast + " รายการ";
     document.getElementById("countMedium").textContent = cntMov.Medium + " รายการ";
     document.getElementById("countSlow").textContent = cntMov.Slow + " รายการ";
     document.getElementById("countSlowly").textContent = cntMov.Slowly + " รายการ";
     document.getElementById("countDead").textContent = cntMov.Dead + " รายการ";
+    
+    // ✅ คำนวณ Card หลัก (ใช้ baseData สำหรับการคำนวณบางส่วน)
+    let totalStock = 0, orderItems = 0, orderValue = 0, returnCount = 0, totalReturnValue = 0;
+    let filteredForTotalCount = 0; // นับเฉพาะรายการที่ตรงเงื่อนไขสำหรับ card มูลค่ารวม
+    
+    filteredData.forEach(r => {
+        // ✅ สำหรับ Card หลัก: คำนวณเฉพาะรายการที่มี Qty6Month > 0
+        if (r.Qty6Month > 0) {
+            filteredForTotalCount++;
+            
+            if (mode === "onlyOrder") {
+                const orderValuePerItem = r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+                totalStock += orderValuePerItem;
+            } else if (mode === "returnable") {
+                totalStock += r.ReturnValue;
+            } else {
+                totalStock += r.Value;
+            }
+        }
+        
+        // คำนวณ Order (เฉพาะที่มี RecommendedOrder > 0)
+        const qty = Math.round(r.RecommendedOrder);
+        if (qty > 0) {
+            orderItems++;
+            orderValue += qty * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+        }
+        
+        // คำนวณ OverStock (เฉพาะที่มี ReturnQty > 0)
+        if (r.ReturnQty > 0) returnCount++;
+        totalReturnValue += r.ReturnValue;
+    });
+    
+    // ✅ อัปเดต Card หลัก
+    document.getElementById("totalStockValue").textContent = formatShortCurrency(totalStock);
+    document.getElementById("orderTotalValue").textContent = formatShortCurrency(orderValue);
+    document.getElementById("totalCount").textContent = filteredForTotalCount + " รายการ"; // ✅ ใช้เฉพาะรายการที่ตรงเงื่อนไข
+    document.getElementById("orderItemCount").textContent = orderItems;
+    document.getElementById("returnItemCount").textContent = returnCount + " รายการ";
+    document.getElementById("returnValue").textContent = formatShortCurrency(totalReturnValue);
+    
+    // ✅ คำนวณ Monthly Withdrawal, Stock Days, After Stock Days (ใช้ baseData)
+    let total_usage_4m_base = 0;
+    let totalStock_base = 0;
+    let totalReturnValue_base = 0;
+    let baseDataForCalculation = 0; // นับ baseData ที่ตรงเงื่อนไข
+    
+    baseData.forEach(r => {
+        // ✅ กรองเฉพาะรายการที่ตรงเงื่อนไขสำหรับการคำนวณ
+        if (r.Qty6Month > 0) {
+            baseDataForCalculation++;
+            totalStock_base += r.Value;
+            totalReturnValue_base += r.ReturnValue;
+            if (r.Unrestricted > 0) {
+                const unit_price = r.Value / r.Unrestricted;
+                total_usage_4m_base += r.Qty4Month * unit_price;
+            }
+        }
+    });
+    
+    const monthly_withdrawal = total_usage_4m_base / 4 || 0;
+    const daily_usage = total_usage_4m_base / 120 || 0;
+    const stock_days = daily_usage > 0 ? Math.round(totalStock_base / daily_usage) : 'N/A';
+    const after_stock_days = daily_usage > 0 ? Math.round((totalStock_base - totalReturnValue_base) / daily_usage) : 'N/A';
+    
+    document.getElementById("monthlyWithdrawalValue").textContent = formatShortCurrency(monthly_withdrawal);
+    document.getElementById("stockDaysValue").textContent = stock_days > 9999 ? 'มาก' : stock_days;
+    document.getElementById("afterStockDaysValue").textContent = after_stock_days > 9999 ? 'มาก' : after_stock_days;
 }
 function getStatusClass(status) {
     if (!status || status.trim() === '') return "status-other";
@@ -1116,31 +1380,83 @@ function exportToCSV() {
     a.click();
     URL.revokeObjectURL(url);
 }
-// Event Listeners
-document.getElementById("cardTotalStock").onclick = () => { mode = "all"; abcFilter = ""; movingFilter = ""; applyFiltersAndRender(); };
-document.getElementById("cardOrderItems").onclick = () => { mode = "onlyOrder"; abcFilter = ""; movingFilter = ""; applyFiltersAndRender(); };
-document.getElementById("cardReturnValue").onclick = () => { mode = "returnable"; abcFilter = ""; movingFilter = ""; applyFiltersAndRender(); };
-document.getElementById("abcA").onclick = () => { abcFilter = "A"; movingFilter = ""; applyFiltersAndRender(); };
-document.getElementById("abcB").onclick = () => { abcFilter = "B"; movingFilter = ""; applyFiltersAndRender(); };
-document.getElementById("abcC").onclick = () => { abcFilter = "C"; movingFilter = ""; applyFiltersAndRender(); };
-document.getElementById("cardFast").onclick = () => { movingFilter = "Fast"; abcFilter = ""; applyFiltersAndRender(); };
-document.getElementById("cardMedium").onclick = () => { movingFilter = "Medium"; abcFilter = ""; applyFiltersAndRender(); };
-document.getElementById("cardSlow").onclick = () => { movingFilter = "Slow"; abcFilter = ""; applyFiltersAndRender(); };
-document.getElementById("cardSlowly").onclick = () => { movingFilter = "Slowly"; abcFilter = ""; applyFiltersAndRender(); };
-document.getElementById("cardDead").onclick = () => { movingFilter = "Dead"; abcFilter = ""; applyFiltersAndRender(); };
-document.getElementById("plantFilter").addEventListener("change", () => { mode = "all"; abcFilter = ""; movingFilter = ""; applyFiltersAndRender(); });
-document.getElementById("plantFilter").addEventListener("change", function() {
-    const plant = this.value;
-    const btn = document.getElementById("uploadBtn");
-    if (plant && sheetIds[plant]) {
-        const sheetId = sheetIds[plant];
-        const gasUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
-        btn.href = gasUrl;
-        btn.style.display = "flex";
-    } else {
-        btn.style.display = "none";
-    }
-});
+// Event Listeners for Cards
+document.getElementById("cardTotalStock").onclick = () => {
+    mode = "all";
+    abcFilter = "";  // เคลียร์ ABC filter
+    movingFilter = "";  // เคลียร์ Moving filter
+    // ✅ สำหรับโหมด all จะกรองเฉพาะ Unrestricted > 0 และ Qty6Month > 0
+    applyFiltersAndRender();
+};
+
+document.getElementById("cardOrderItems").onclick = () => {
+    mode = "onlyOrder";
+    abcFilter = "";  // เคลียร์ ABC filter
+    movingFilter = "";  // เคลียร์ Moving filter
+    // ✅ สำหรับโหมด Order ไม่ต้องกรอง Unrestricted > 0 และ Qty6Month > 0 เพราะต้องการเห็นทุกตัวที่แนะนำสั่ง
+    applyFiltersAndRender();
+};
+
+document.getElementById("cardReturnValue").onclick = () => {
+    mode = "returnable";
+    abcFilter = "";  // เคลียร์ ABC filter
+    movingFilter = "";  // เคลียร์ Moving filter
+    // ✅ สำหรับโหมด OverStock ไม่ต้องกรอง Unrestricted > 0 และ Qty6Month > 0 เพราะต้องการเห็นทุกตัวที่คืนได้
+    applyFiltersAndRender();
+};
+
+// ✅ Card A - เมื่อคลิก
+document.getElementById("abcA").onclick = () => {
+    abcFilter = "A";
+    movingFilter = ""; // เคลียร์ Moving filter
+    applyFiltersAndRender();
+};
+
+// ✅ Card B - เมื่อคลิก
+document.getElementById("abcB").onclick = () => {
+    abcFilter = "B";
+    movingFilter = ""; // เคลียร์ Moving filter
+    applyFiltersAndRender();
+};
+
+// ✅ Card C - เมื่อคลิก
+document.getElementById("abcC").onclick = () => {
+    abcFilter = "C";
+    movingFilter = ""; // เคลียร์ Moving filter
+    applyFiltersAndRender();
+};
+
+// ✅ Card Moving - เมื่อคลิก (เพิ่มให้เคลียร์ ABC filter)
+document.getElementById("cardFast").onclick = () => {
+    movingFilter = "Fast";
+    abcFilter = ""; // เคลียร์ ABC filter
+    applyFiltersAndRender();
+};
+
+document.getElementById("cardMedium").onclick = () => {
+    movingFilter = "Medium";
+    abcFilter = ""; // เคลียร์ ABC filter
+    applyFiltersAndRender();
+};
+
+document.getElementById("cardSlow").onclick = () => {
+    movingFilter = "Slow";
+    abcFilter = ""; // เคลียร์ ABC filter
+    applyFiltersAndRender();
+};
+
+document.getElementById("cardSlowly").onclick = () => {
+    movingFilter = "Slowly";
+    abcFilter = ""; // เคลียร์ ABC filter
+    applyFiltersAndRender();
+};
+
+document.getElementById("cardDead").onclick = () => {
+    movingFilter = "Dead";
+    abcFilter = ""; // เคลียร์ ABC filter
+    applyFiltersAndRender();
+};
+document.getElementById("plantFilter").addEventListener("change", applyFiltersAndRender);
 document.getElementById("statusFilter").addEventListener("change", applyFiltersAndRender);
 ["leadTimeDays","safetyDays","coverDays","searchInput"].forEach(id => document.getElementById(id).addEventListener("input", applyFiltersAndRender));
 document.getElementById("exportBtn").onclick = exportToCSV;
