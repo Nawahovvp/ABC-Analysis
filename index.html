@@ -90,6 +90,7 @@
         .loader { --w:10ch; font-weight: bold; font-family: monospace; font-size: 30px; letter-spacing: var(--w); width: var(--w); overflow: hidden; white-space: nowrap; text-shadow: calc(-1*var(--w)) 0, calc(-2*var(--w)) 0, calc(-3*var(--w)) 0, calc(-4*var(--w)) 0, calc(-5*var(--w)) 0, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0, calc(-8*var(--w)) 0, calc(-9*var(--w)) 0; animation: l16 2s infinite; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; }
         .loader:before { content: "Loading..."; }
         @keyframes l16 { 20% { text-shadow: calc(-1*var(--w)) 0, calc(-2*var(--w)) 0 red, calc(-3*var(--w)) 0, calc(-4*var(--w)) 0 #ffa516, calc(-5*var(--w)) 0 #63fff4, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0, calc(-8*var(--w)) 0 green, calc(-9*var(--w)) 0; } 40% { text-shadow: calc(-1*var(--w)) 0, calc(-2*var(--w)) 0 red, calc(-3*var(--w)) 0 #e945e9, calc(-4*var(--w)) 0, calc(-5*var(--w)) 0 green, calc(-6*var(--w)) 0 orange, calc(-7*var(--w)) 0, calc(-8*var(--w)) 0 green, calc(-9*var(--w)) 0; } 60% { text-shadow: calc(-1*var(--w)) 0 lightblue, calc(-2*var(--w)) 0, calc(-3*var(--w)) 0 #e945e9, calc(-4*var(--w)) 0, calc(-5*var(--w)) 0 green, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0 yellow, calc(-8*var(--w)) 0 #ffa516, calc(-9*var(--w)) 0 red; } 80% { text-shadow: calc(-1*var(--w)) 0 lightblue, calc(-2*var(--w)) 0 yellow, calc(-3*var(--w)) 0 #63fff4, calc(-4*var(--w)) 0 #ffa516, calc(-5*var(--w)) 0 red, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0 grey, calc(-8*var(--w)) 0 #63fff4, calc(-9*var(--w)) 0; } }
+        #backBtn { position: absolute; top: 20px; left: 20px; background: none; border: none; font-size: 24px; color: white; cursor: pointer; display: none; }
     </style>
 </head>
 <body>
@@ -102,7 +103,17 @@
         <button id="logoutBtn">Log out</button>
     </div>
     <div class="loader" id="loader" style="display: none;"></div>
-    <!-- Card เงินสั้น ๆ -->
+    <button id="backBtn"><i class="fas fa-arrow-left"></i></button>
+    <!-- Plant Selection Section -->
+    <div id="plantSelection" style="display: none; text-align: center; padding: 30px; background: linear-gradient(135deg, #f0f4ff, #e0eaff); border-radius: 20px; margin: 30px auto; max-width: 600px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+        <h2 style="color: #2c3e50; margin-bottom: 20px;">เลือก Plant ของคุณ</h2>
+        <div class="control-group" style="justify-content: center; margin: 0 auto; width: fit-content;">
+            <label><i class="fas fa-industry control-icon"></i> Plant:</label>
+            <select id="plantSelect" style="width: 250px; margin: 0 10px;"></select>
+        </div>
+        <button id="viewBtn" class="export-btn" style="margin-top: 20px;"><i class="fas fa-eye"></i> View</button>
+    </div>
+    <!-- Card Summary -->
     <div class="summary-row" id="mainCardsSection" style="display:none;">
         <div class="card total-stock" id="cardTotalStock">
             <div class="card-title">มูลค่ารวม</div>
@@ -149,6 +160,7 @@
                 <label><i class="fas fa-industry control-icon"></i> Plant:</label>
                 <select id="plantFilter"><option value="">ทุก Plant</option></select>
             </div>
+            <a id="uploadBtn" class="export-btn" href="#" target="_blank" style="display: none; margin-left: 10px; flex: 0 1 auto; margin-left: 0;"><i class="fas fa-upload"></i> Upload</a>
             <div class="control-group">
                 <label><i class="fas fa-clock control-icon"></i> Lead Time:</label>
                 <input type="number" id="leadTimeDays" value="15">
@@ -234,16 +246,74 @@ let currentPage = 1;
 const rowsPerPage = 25;
 let users = [];
 let loggedUser = null;
-
+let inventoryUrl; // Dynamic based on selected Plant
 const userSheetID = '1eqVoLsZxGguEbRCC5rdI4iMVtQ7CK4T3uXRdx8zE3uw';
 const userSheetName = 'UserPlant';
 const userUrl = `https://opensheet.elk.sh/${userSheetID}/${userSheetName}`;
 const usageUrl = 'https://opensheet.elk.sh/1P8Frv1zvcuO3qt8seU-zMF0FV0TQHyKXLn9GNHVr6kI/MoveAllsum';
-const inventoryUrl = 'https://opensheet.elk.sh/1gtZLR5Tm574o5xRbdrRm9yFzRukGx_UAzUnoah36cxQ/Sheet1';
 const mainsapUrl = 'https://opensheet.elk.sh/1CkfOIe2nDYBLs5aPGkPyZhOeqJkyS7UQ6tuMzxy-mfk/mainsap';
 const avgValUrl = 'https://opensheet.elk.sh/1nwXDN6FjmXOHXzlxVv6y0Kv4peU9kjW3q20PAWsp6_4/Sheet1';
 const statusUrl = 'https://opensheet.elk.sh/1yP1sq12fSXj00htJewUIugkQCaxA0smO2je7wtEISdw/Orders';
-
+const inventoryUrls = {
+    // '0301': 'https://opensheet.elk.sh/1x-B1xekpMm4p7fkKucvLjaewtp66uGIp8ZIxJJZAxMk/Sheet1',
+    // '0303': 'https://opensheet.elk.sh/"0303"/Sheet1',
+    '0304': 'https://opensheet.elk.sh/1miQgObvPdIocjf2Mwn-GZxRvDZy0R5gIl1zhxMWvM-E/Sheet1',
+    '0309': 'https://opensheet.elk.sh/1ntRtlRIndxgEZ3udnh7Nj8LSQiaUdAeAg5j8qd_z8sA/Sheet1',
+    // '0310': 'https://opensheet.elk.sh/"0310"/Sheet1',
+    '0311': 'https://opensheet.elk.sh/1OKDdqLY_TOjjfLJ58xFiq-WHIDbMrxMcDho6FO5Rq8o/Sheet1',
+    '0312': 'https://opensheet.elk.sh/1ilYbVsCqA1cSoUnZwwULCmPkdakobICkyq5JpBJyyAU/Sheet1',
+    '0313': 'https://opensheet.elk.sh/12FSbkYSB1zi6xo2WGAsM0jFyp3IkIywLFVF0Zn2axpE/Sheet1',
+    // '0315': 'https://opensheet.elk.sh/"0315"/Sheet1',
+    '0319': 'https://opensheet.elk.sh/1pYJsp3ZVSwQ1h_Ayqp3BrMTsm-ZtLREU03Qw5WUtgAw/Sheet1',
+    // '0318': 'https://opensheet.elk.sh/"0318"/Sheet1',
+    '0320': 'https://opensheet.elk.sh/1V5uhH1wekza4FLN2VqtVBfgIA1sbTY_mqq4ohnTmW_M/Sheet1',
+    // '0322': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    // '0323': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    // '0324': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    '0326': 'https://opensheet.elk.sh/1gtZLR5Tm574o5xRbdrRm9yFzRukGx_UAzUnoah36cxQ/Sheet1',
+    // '0362': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    // '0363': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    // '0364': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    // '0365': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    '0366': 'https://opensheet.elk.sh/1NtRsaxPkeNb4sAcTm-Tn4oN-o5F6z_56S1nhTg7kvBc/Sheet1',
+    // '0367': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    // '0368': 'https://opensheet.elk.sh/"0312"/Sheet1',
+    '0369': 'https://opensheet.elk.sh/13NYKhEWkWLLnA2DZZEP-zZEz2r33-roUDPMSWoFR3Qk/Sheet1'
+};
+const sheetIds = {};
+Object.keys(inventoryUrls).forEach(plant => {
+    const url = inventoryUrls[plant];
+    const parts = url.split('/');
+    sheetIds[plant] = parts[3];
+});
+const plantNames = {
+    '0301': 'นวนคร',
+    '0303': 'SA-สงขลา',
+    '0304': 'พระราม 3',
+    '0305': 'ราชบุรี',
+    '0307': 'สุราษฎร์',
+    '0309': 'นครราชสีมา',
+    '0310': 'SA-อุดร 1',
+    '0311': 'ศรีราชา',
+    '0312': 'พิษณุโลก',
+    '0313': 'ภูเก็ต',
+    '0315': 'SA-อยุธยา',
+    '0319': 'ขอนแก่น',
+    '0318': 'คลังวัตถุดิบ',
+    '0320': 'ลำปาง',
+    '0322': 'SA-อุดร 2',
+    '0323': 'SA-ลำลูกกา',
+    '0324': 'SA-ปัตตานี',
+    '0326': 'วิภาวดี 62',
+    '0362': 'SA-หนองแขม',
+    '0363': 'SA-ปากเกร็ด',
+    '0364': 'SA-บางบัวทอง',
+    '0365': 'SA-สมุทรปราการ',
+    '0366': 'เชียงใหม่',
+    '0367': 'SA-ฉะเชิงเทรา',
+    '0368': 'SA-ร้อยเอ็ด',
+    '0369': 'ระยอง'
+};
 function toNumber(v) { return parseFloat((v||"0").toString().replace(/,/g,'')) || 0; }
 function formatNumber(n) { return Number(n).toLocaleString('th-TH'); }
 function formatCurrency(n) { return Number(n).toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2}); }
@@ -267,7 +337,6 @@ function calculateKeepQty(r) {
     if (r.Moving === "Fast" && r.ABCValue === "A") return Math.max(10, Math.round(avg * 120));
     return Math.max(1, Math.round(avg * 40));
 }
-
 async function loadUsers() {
     try {
         const res = await fetch(userUrl);
@@ -277,14 +346,13 @@ async function loadUsers() {
         alert("ไม่สามารถโหลดข้อมูลผู้ใช้ได้");
     }
 }
-
 function checkLogin() {
     const remembered = localStorage.getItem('rememberedUser');
     if (remembered) {
         const user = JSON.parse(remembered);
         loggedUser = user;
         showUserMenu();
-        loadData();
+        document.getElementById('plantSelection').style.display = 'block';
         return true;
     }
     const sessionUser = sessionStorage.getItem('loggedUser');
@@ -292,20 +360,17 @@ function checkLogin() {
         const user = JSON.parse(sessionUser);
         loggedUser = user;
         showUserMenu();
-        loadData();
+        document.getElementById('plantSelection').style.display = 'block';
         return true;
     }
     return false;
 }
-
 function showLogin() {
     document.getElementById('loginModal').style.display = 'flex';
 }
-
 function hideLogin() {
     document.getElementById('loginModal').style.display = 'none';
 }
-
 function login() {
     const idUser = document.getElementById('idUserInput').value.trim();
     const password = document.getElementById('passwordInput').value.trim();
@@ -320,12 +385,11 @@ function login() {
         }
         hideLogin();
         showUserMenu();
-        loadData();
+        document.getElementById('plantSelection').style.display = 'block';
     } else {
         document.getElementById('loginError').textContent = 'IDUser หรือ Password ไม่ถูกต้อง';
     }
 }
-
 function logout() {
     localStorage.removeItem('rememberedUser');
     sessionStorage.removeItem('loggedUser');
@@ -337,41 +401,67 @@ function logout() {
     document.getElementById("controlsSection").style.display = "none";
     document.getElementById("tableSection").style.display = "none";
     document.getElementById("pagination").style.display = "none";
+    document.getElementById('plantSelection').style.display = "none";
+    document.getElementById('backBtn').style.display = "none";
     showLogin();
 }
-
 function showUserMenu() {
     document.getElementById('menuBtn').style.display = 'block';
     document.getElementById('userID').textContent = `รหัส: ${loggedUser.IDUser}`;
     document.getElementById('userName').textContent = `ชื่อ: ${loggedUser.Name}`;
 }
-
 document.getElementById('menuBtn').addEventListener('click', () => {
     const menu = document.getElementById('userMenu');
     menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
 });
 document.getElementById('logoutBtn').addEventListener('click', logout);
 document.getElementById('loginBtn').addEventListener('click', login);
-
 async function init() {
     await loadUsers();
     if (!checkLogin()) {
         showLogin();
     }
+    // Populate plantSelect with available plants
+    const plantSelect = document.getElementById('plantSelect');
+    Object.keys(inventoryUrls).sort().forEach(p => {
+        const name = plantNames[p] || p;
+        plantSelect.add(new Option(`${p} - ${name}`, p));
+    });
 }
 init();
-
+document.getElementById('viewBtn').addEventListener('click', () => {
+    const selectedPlant = document.getElementById('plantSelect').value;
+    if (!selectedPlant) {
+        alert('กรุณาเลือก Plant');
+        return;
+    }
+    inventoryUrl = inventoryUrls[selectedPlant];
+    if (!inventoryUrl) {
+        alert('ไม่มีข้อมูลสำหรับ Plant นี้');
+        return;
+    }
+    document.getElementById('plantSelection').style.display = 'none';
+    document.getElementById('backBtn').style.display = 'block';
+    loadData();
+});
+document.getElementById('backBtn').addEventListener('click', () => {
+    document.getElementById('mainCardsSection').style.display = 'none';
+    document.getElementById('summarySection').style.display = 'none';
+    document.getElementById('controlsSection').style.display = 'none';
+    document.getElementById('tableSection').style.display = 'none';
+    document.getElementById('pagination').style.display = 'none';
+    document.getElementById('backBtn').style.display = 'none';
+    document.getElementById('plantSelection').style.display = 'block';
+});
 async function loadData() {
     const loader = document.getElementById("loader");
     const summarySection = document.getElementById("summarySection");
     const controlsSection = document.getElementById("controlsSection");
     const tableSection = document.getElementById("tableSection");
-
     loader.style.display = "block";
     summarySection.style.display = "none";
     controlsSection.style.display = "none";
     tableSection.style.display = "none";
-
     try {
         const [invRes, usageRes, mainsapRes, avgValRes, statusRes] = await Promise.all([
             fetch(inventoryUrl),
@@ -380,19 +470,17 @@ async function loadData() {
             fetch(avgValUrl),
             fetch(statusUrl)
         ]);
-
         const inv = await invRes.json();
         const usage = await usageRes.json();
         const mainsap = await mainsapRes.json();
         const avgValData = await avgValRes.json();
         const statusData = await statusRes.json();
-
         // ✅ ตรวจสอบโครงสร้างข้อมูล status อย่างละเอียด
         console.log("=== ข้อมูล Status จาก URL ===");
         console.log("จำนวนแถวข้อมูล Status:", statusData.length);
         console.log("แถวแรกของข้อมูล Status:", statusData[0]);
         console.log("คอลัมน์ทั้งหมดที่มีในข้อมูล Status:", Object.keys(statusData[0] || {}));
-        
+       
         // ✅ แสดงค่าต่างๆ ในคอลัมน์เพื่อตรวจสอบ
         if (statusData.length > 0) {
             console.log("ตัวอย่างข้อมูล Status 5 รายการแรก:");
@@ -407,33 +495,31 @@ async function loadData() {
                 });
             });
         }
-
         // ✅ ตรวจสอบคอลัมน์ที่อาจเป็น Status
-        const possibleStatusKeys = Object.keys(statusData[0] || {}).filter(key => 
-            key.toLowerCase().includes('status') || 
+        const possibleStatusKeys = Object.keys(statusData[0] || {}).filter(key =>
+            key.toLowerCase().includes('status') ||
             key.toLowerCase().includes('สถานะ') ||
             key.toLowerCase().includes('material')
         );
         console.log("คอลัมน์ที่เป็นไปได้สำหรับ Status:", possibleStatusKeys);
-
         // ✅ สร้าง Map สำหรับ Status - พิจารณาคอลัมน์ต่างๆ ที่เป็นไปได้
         const statusMap = new Map();
         statusData.forEach(r => {
             const plant = (r.Plant || '').toString().trim();
             const material = (r.Material || '').toString().trim();
-            
+           
             // หาคอลัมน์ Status จากหลายชื่อที่เป็นไปได้
             let status = '';
             const rowKeys = Object.keys(r);
-            
+           
             // ลองหาจากคอลัมน์ต่างๆ ที่อาจเป็น Status
-            const statusKeys = rowKeys.filter(k => 
+            const statusKeys = rowKeys.filter(k =>
                 k.toLowerCase().includes('StatusMaterial') ||
                 k.toLowerCase().includes('status material') ||
                 k.toLowerCase().includes('สถานะวัสดุ') ||
                 (k.toLowerCase().includes('status') && k.toLowerCase().includes('material'))
             );
-            
+           
             if (statusKeys.length > 0) {
                 status = (r[statusKeys[0]] || '').toString().trim();
             } else {
@@ -443,7 +529,7 @@ async function loadData() {
                     status = (r[altStatusKeys[0]] || '').toString().trim();
                 }
             }
-            
+           
             if (plant && material && status) {
                 const key = `${plant}-${material}`;
                 statusMap.set(key, status);
@@ -453,9 +539,8 @@ async function loadData() {
                 console.log(`ไม่พบ Status สำหรับ ${key}`);
             }
         });
-
         console.log("จำนวนข้อมูล Status ที่โหลดได้:", statusMap.size);
-        
+       
         // ✅ แสดงตัวอย่างข้อมูลใน Map
         if (statusMap.size > 0) {
             console.log("ตัวอย่างข้อมูลใน statusMap (5 รายการแรก):");
@@ -469,7 +554,6 @@ async function loadData() {
                 }
             }
         }
-
         // ✅ ตรวจสอบโครงสร้างข้อมูล inventory
         console.log("=== ข้อมูล Inventory จาก URL ===");
         console.log("จำนวนแถวข้อมูล Inventory:", inv.length);
@@ -483,7 +567,6 @@ async function loadData() {
                 });
             });
         }
-
         // ✅ สร้าง Map สำหรับ AvgVal
         const avgValMap = new Map();
         avgValData.forEach(r => {
@@ -493,58 +576,56 @@ async function loadData() {
                 avgValMap.set(material, avgVal);
             }
         });
-
         console.log("จำนวนข้อมูล AvgVal ที่โหลดได้:", avgValMap.size);
-
         // ✅ สร้าง Map สำหรับข้อมูลการเบิก
         const usageMap = new Map();
         usage.forEach(r => {
             const plant = (r.Plant || '').toString().trim();
             const material = (r.Material || '').toString().trim();
-            
+           
             if (plant && material) {
                 const key = `${plant}-${material}`;
-                
+               
                 let qty4m = 0;
                 let qty6m = 0;
                 let thirtyDay = 0;
-                
+               
                 const rowKeys = Object.keys(r);
-                
+               
                 // ค้นหาคอลัมน์สำหรับ 4 เดือน
-                const qty4mKeys = rowKeys.filter(k => 
-                    k.toLowerCase().includes('4m') || 
+                const qty4mKeys = rowKeys.filter(k =>
+                    k.toLowerCase().includes('4m') ||
                     k.toLowerCase().includes('4m.') ||
                     k.toLowerCase().includes('4 month') ||
                     k.toLowerCase().includes('qtyissu')
                 );
-                
+               
                 if (qty4mKeys.length > 0) {
                     qty4m = toNumber(r[qty4mKeys[0]] || 0);
                 }
-                
+               
                 // ค้นหาคอลัมน์สำหรับ 6 เดือน
-                const qty6mKeys = rowKeys.filter(k => 
-                    k.toLowerCase().includes('6m') || 
+                const qty6mKeys = rowKeys.filter(k =>
+                    k.toLowerCase().includes('6m') ||
                     k.toLowerCase().includes('6m.') ||
                     k.toLowerCase().includes('6 month')
                 );
-                
+               
                 if (qty6mKeys.length > 0) {
                     qty6m = toNumber(r[qty6mKeys[0]] || 0);
                 }
-                
+               
                 // ค้นหาคอลัมน์สำหรับ 30 วัน
-                const thirtyDayKeys = rowKeys.filter(k => 
-                    k.toLowerCase().includes('30') || 
+                const thirtyDayKeys = rowKeys.filter(k =>
+                    k.toLowerCase().includes('30') ||
                     k.toLowerCase().includes('30day') ||
                     k.toLowerCase().includes('30 day')
                 );
-                
+               
                 if (thirtyDayKeys.length > 0) {
                     thirtyDay = toNumber(r[thirtyDayKeys[0]] || 0);
                 }
-                
+               
                 usageMap.set(key, {
                     Qty4Month: qty4m,
                     Qty6Month: qty6m || Math.round(qty4m * 1.5),
@@ -552,9 +633,7 @@ async function loadData() {
                 });
             }
         });
-
         console.log("จำนวนข้อมูลการเบิกที่โหลดได้:", usageMap.size);
-
         // ✅ สร้าง Map สำหรับ mainsap (เฉพาะข้อมูลเพิ่มเติม)
         const mainsapMap = new Map();
         mainsap.forEach(r => {
@@ -567,78 +646,77 @@ async function loadData() {
                 });
             }
         });
-
         // ✅ สร้าง allData โดยใช้ข้อมูลจาก inventoryUrl เป็นหลัก
         allData = [];
-        
+       
         inv.forEach(r => {
             const plant = (r.Plant || '').toString().trim();
             const material = (r.Material || '').toString().trim();
-            
+           
             if (plant && material) {
                 const key = `${plant}-${material}`;
-                
+               
                 // ✅ หาข้อมูลการเบิก
                 const usageData = usageMap.get(key);
-                const usageInfo = usageData || { 
-                    Qty4Month: 0, 
-                    Qty6Month: 0, 
-                    ThirtyDay: 0 
+                const usageInfo = usageData || {
+                    Qty4Month: 0,
+                    Qty6Month: 0,
+                    ThirtyDay: 0
                 };
-                
-                const main = mainsapMap.get(material) || { 
-                    Note: '', 
-                    MultiplyUnit: 1, 
+               
+                const main = mainsapMap.get(material) || {
+                    Note: '',
+                    MultiplyUnit: 1,
                     Product: ''
                 };
-                
+               
                 // ✅ ดึงค่า Status
                 const status = statusMap.get(key) || '';
                 if (status) {
                     console.log(`พบ Status สำหรับ ${key}: ${status}`);
                 }
-                
+               
                 // ✅ ดึงค่า AvgVal
                 const avgVal = avgValMap.get(material) || 0;
-                
+               
                 const qty4m = usageInfo.Qty4Month;
                 const qty6m = usageInfo.Qty6Month;
                 const thirtyDay = usageInfo.ThirtyDay;
-                
+               
                 const unrestricted = toNumber(r.Unrestricted || r["Unrestricted stock"] || 0);
                 const originalValue = toNumber(r["Value Unrestricted"] || r["Value unrestricted"] || 0);
-                
+               
                 // ✅ ดึงข้อมูลจาก inventoryUrl
                 const description = r["Material description"] || '';
-                
+               
                 // ✅ ดึง Storage bin จาก inventoryUrl
                 let storageBin = '';
                 const rowKeys = Object.keys(r);
-                const storageBinKey = rowKeys.find(k => 
-                    k.toLowerCase().includes('storage') && 
+                const storageBinKey = rowKeys.find(k =>
+                    k.toLowerCase().includes('storage') &&
                     k.toLowerCase().includes('bin')
-                ) || rowKeys.find(k => 
+                ) || rowKeys.find(k =>
                     k.toLowerCase().includes('storagebin')
-                ) || rowKeys.find(k => 
+                ) || rowKeys.find(k =>
                     k.toLowerCase().includes('bin')
                 );
-                
+               
                 if (storageBinKey) {
                     storageBin = (r[storageBinKey] || '').toString().trim();
                 }
-                
+               
                 // ✅ ดึงหน่วยจาก inventoryUrl
                 let unit = r["Base Unit of Measure"] || '';
                 if (!unit) {
-                    const unitKey = rowKeys.find(k => 
-                        k.toLowerCase().includes('unit') || 
+                    const unitKey = rowKeys.find(k =>
+                        k.toLowerCase().includes('unit') ||
                         k.toLowerCase().includes('uom')
                     );
                     if (unitKey) {
                         unit = (r[unitKey] || '').toString().trim();
                     }
                 }
-                
+               
                 // ✅ คำนวณมูลค่า
                 let value;
                 if (avgVal > 0) {
@@ -646,7 +724,6 @@ async function loadData() {
                 } else {
                     value = originalValue;
                 }
-
                 allData.push({
                     Plant: plant,
                     Material: material,
@@ -672,11 +749,10 @@ async function loadData() {
                 });
             }
         });
-
         // ✅ ตรวจสอบข้อมูลตัวอย่าง
         console.log(`=== สรุปข้อมูล ===`);
         console.log(`สร้าง allData สำเร็จ: ${allData.length} รายการ`);
-        
+       
         if (allData.length > 0) {
             console.log("ตัวอย่างข้อมูล allData 5 รายการแรก:");
             allData.slice(0, 5).forEach((item, index) => {
@@ -689,11 +765,11 @@ async function loadData() {
                     Value: item.Value
                 });
             });
-            
+           
             // นับจำนวนรายการที่มี Status
             const withStatus = allData.filter(item => item.Status && item.Status.trim() !== '');
             console.log(`จำนวนรายการที่มีข้อมูล Status: ${withStatus.length}/${allData.length}`);
-            
+           
             // แสดงสถานะต่างๆ ที่มี
             const statusCounts = {};
             allData.forEach(item => {
@@ -701,11 +777,11 @@ async function loadData() {
                 statusCounts[status] = (statusCounts[status] || 0) + 1;
             });
             console.log("จำนวนรายการตามสถานะ:", statusCounts);
-            
+           
             // สร้างรายการสถานะ unique สำหรับ dropdown
             const uniqueStatuses = [...new Set(allData.map(item => item.Status).filter(s => s && s.trim() !== ''))].sort();
             console.log("สถานะต่างๆ ที่พบ:", uniqueStatuses);
-            
+           
             // อัปเดต dropdown status filter
             const statusFilterSelect = document.getElementById("statusFilter");
             statusFilterSelect.innerHTML = '<option value="">ทุกสถานะ</option>';
@@ -717,25 +793,21 @@ async function loadData() {
                 statusFilterSelect.add(new Option('ไม่มีสถานะ', 'ไม่มีสถานะ'));
             }
         }
-
         calcABCValue();
         fillPlantDropdown();
         setDefaultAndCalculate();
-
         loader.style.display = "none";
         document.getElementById("mainCardsSection").style.display = "flex";
         summarySection.style.display = "flex";
         controlsSection.style.display = "flex";
         tableSection.style.display = "block";
         document.getElementById("pagination").style.display = "block";
-
     } catch (e) {
         loader.style.display = "none";
         alert("โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรช");
         console.error("เกิดข้อผิดพลาด:", e);
     }
 }
-
 function calcABCValue() {
     const sorted = [...allData].sort((a,b) => b.Value - a.Value);
     const total = sorted.reduce((s,r) => s + r.Value, 0);
@@ -750,7 +822,6 @@ function calcABCValue() {
         }
     });
 }
-
 function recalculateStockFields(data, params) {
     data.forEach(r => {
         const d = r.AvgDailyUse || 0;
@@ -808,21 +879,18 @@ function recalculateStockFields(data, params) {
         r.ReturnValue = returnValue;
     });
 }
-
 function fillPlantDropdown() {
     const sel = document.getElementById("plantFilter");
     const plants = [...new Set(allData.map(r => r.Plant))].filter(Boolean).sort();
     sel.innerHTML = '<option value="">ทุก Plant</option>';
     plants.forEach(p => sel.add(new Option(p, p)));
 }
-
 function setDefaultAndCalculate() {
     document.getElementById("plantFilter").value = "";
     document.getElementById("statusFilter").value = "";
     mode = "all"; abcFilter = ""; movingFilter = ""; statusFilter = "";
     applyFiltersAndRender();
 }
-
 document.getElementById("tableHeader").addEventListener("click", function(e) {
     const col = e.target.closest("th[data-sort]");
     if (!col) return;
@@ -835,15 +903,14 @@ document.getElementById("tableHeader").addEventListener("click", function(e) {
     }
     applyFiltersAndRender();
 });
-
 function applyFiltersAndRender() {
     let data = [...allData];
     const plant = document.getElementById("plantFilter").value;
     if (plant) data = data.filter(r => r.Plant === plant);
-    
+   
     const search = document.getElementById("searchInput").value.toLowerCase();
     if (search) data = data.filter(r => r.Material.toLowerCase().includes(search) || r.Description.toLowerCase().includes(search));
-    
+   
     const statusFilterVal = document.getElementById("statusFilter").value;
     if (statusFilterVal) {
         if (statusFilterVal === "ไม่มีสถานะ") {
@@ -852,26 +919,26 @@ function applyFiltersAndRender() {
             data = data.filter(r => r.Status === statusFilterVal);
         }
     }
-    
+   
     const params = {
         leadTime: parseInt(document.getElementById("leadTimeDays").value) || 5,
         safety: parseInt(document.getElementById("safetyDays").value) || 3,
         cover: parseInt(document.getElementById("coverDays").value) || 40
     };
-    
+   
     recalculateStockFields(data, params);
     let baseData = [...data];
-    
+   
     if (mode === "onlyOrder") data = data.filter(r => Math.round(r.RecommendedOrder) >= 1);
     else if (mode === "returnable") data = data.filter(r => r.ReturnQty > 0);
     else if (mode === "afterReturn") data = data.map(r => ({...r, Unrestricted: r.Unrestricted - r.ReturnQty, Value: r.Value - r.ReturnValue}));
-    
+   
     if (abcFilter) data = data.filter(r => r.ABCValue === abcFilter);
     if (movingFilter) data = data.filter(r => r.Moving === movingFilter);
-    
+   
     data.sort((a,b) => b.Value - a.Value);
     filteredData = data;
-    
+   
     filteredData.sort((a, b) => {
         let x = a[sortKey] || 0;
         let y = b[sortKey] || 0;
@@ -879,13 +946,12 @@ function applyFiltersAndRender() {
         if (typeof y === "string") y = y.toLowerCase();
         return sortDir === "asc" ? (x > y ? 1 : -1) : (x < y ? 1 : -1);
     });
-    
+   
     currentPage = 1;
     renderTable();
     renderPagination();
     updateAllCards(baseData, filteredData);
 }
-
 function updateAllCards(baseData, filteredData) {
     const abc = {A:0,B:0,C:0}, cntABC = {A:0,B:0,C:0};
     const mov = {Fast:0,Medium:0,Slow:0,Slowly:0,Dead:0}, cntMov = {Fast:0,Medium:0,Slow:0,Slowly:0,Dead:0};
@@ -893,7 +959,7 @@ function updateAllCards(baseData, filteredData) {
     let total_usage_4m_base = 0;
     let totalStock_base = 0;
     let totalReturnValue_base = 0;
-    
+   
     filteredData.forEach(r => {
         totalStock += r.Value;
         abc[r.ABCValue] += r.Value; cntABC[r.ABCValue]++;
@@ -906,7 +972,7 @@ function updateAllCards(baseData, filteredData) {
         if (r.ReturnQty > 0) returnCount++;
         totalReturnValue += r.ReturnValue;
     });
-    
+   
     baseData.forEach(r => {
         totalStock_base += r.Value;
         totalReturnValue_base += r.ReturnValue;
@@ -915,12 +981,12 @@ function updateAllCards(baseData, filteredData) {
             total_usage_4m_base += r.Qty4Month * unit_price;
         }
     });
-    
+   
     const monthly_withdrawal = total_usage_4m_base / 4 || 0;
     const daily_usage = total_usage_4m_base / 120 || 0;
     const stock_days = daily_usage > 0 ? Math.round(totalStock_base / daily_usage) : 'N/A';
     const after_stock_days = daily_usage > 0 ? Math.round((totalStock_base - totalReturnValue_base) / daily_usage) : 'N/A';
-    
+   
     document.getElementById("totalStockValue").textContent = formatShortCurrency(totalStock);
     document.getElementById("orderTotalValue").textContent = formatShortCurrency(orderValue);
     document.getElementById("sumA").textContent = formatShortCurrency(abc.A);
@@ -947,7 +1013,6 @@ function updateAllCards(baseData, filteredData) {
     document.getElementById("countSlowly").textContent = cntMov.Slowly + " รายการ";
     document.getElementById("countDead").textContent = cntMov.Dead + " รายการ";
 }
-
 function getStatusClass(status) {
     if (!status || status.trim() === '') return "status-other";
     const statusLower = status.toLowerCase();
@@ -958,25 +1023,24 @@ function getStatusClass(status) {
     if (statusLower.includes('active') || statusLower.includes('ใช้งาน') || statusLower.includes('active')) return "status-approved";
     return "status-other";
 }
-
 function renderTable() {
     const container = document.getElementById("dataList");
     container.innerHTML = "";
     const start = (currentPage-1)*rowsPerPage;
     const end = start + rowsPerPage;
     const pageData = filteredData.slice(start, end);
-    
+   
     if (pageData.length === 0) {
         container.innerHTML = `<tr><td colspan="24" style="text-align:center;padding:50px;color:#95a5a6;font-size:16px;">ไม่มีข้อมูลตามเงื่อนไข</td></tr>`;
         return;
     }
-    
+   
     pageData.forEach(r => {
         const orderQty = Math.round(r.RecommendedOrder);
         const orderClass = orderQty === 0 ? "order-0" : orderQty <= 10 ? "order-1-10" : orderQty <= 50 ? "order-11-50" : orderQty <= 200 ? "order-51-200" : "order-200";
         const statusClass = getStatusClass(r.Status);
         const displayStatus = r.Status && r.Status.trim() !== '' ? r.Status : "-";
-        
+       
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${r.Plant}</td>
@@ -1007,7 +1071,6 @@ function renderTable() {
         container.appendChild(row);
     });
 }
-
 function renderPagination() {
     const totalPages = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
     const p = document.getElementById("pagination");
@@ -1027,7 +1090,6 @@ function renderPagination() {
     p.appendChild(createBtn(">", currentPage + 1, currentPage === totalPages));
     p.appendChild(createBtn(">>", totalPages, currentPage === totalPages));
 }
-
 function exportToCSV() {
     const headers = ["Plant","Material","รายการอะไหล่","Storage bin","หน่วย","คงเหลือ","มูลค่า","ใช้ 6 เดือน","ใช้ 4 เดือน","เฉลี่ย/ด.","30Day","Mean","Safety","ROP","DOS","แนะนำสั่งซื้อ","หมายเหตุ","คูณหน่วย","Product","ABC","Moving","ส่งคืนได้ (ชิ้น)","% สะสม","Status"];
     let csv = "\uFEFF" + headers.join(",") + "\n";
@@ -1050,7 +1112,6 @@ function exportToCSV() {
     a.click();
     URL.revokeObjectURL(url);
 }
-
 // Event Listeners
 document.getElementById("cardTotalStock").onclick = () => { mode = "all"; abcFilter = ""; movingFilter = ""; applyFiltersAndRender(); };
 document.getElementById("cardOrderItems").onclick = () => { mode = "onlyOrder"; abcFilter = ""; movingFilter = ""; applyFiltersAndRender(); };
@@ -1064,6 +1125,18 @@ document.getElementById("cardSlow").onclick = () => { movingFilter = "Slow"; abc
 document.getElementById("cardSlowly").onclick = () => { movingFilter = "Slowly"; abcFilter = ""; applyFiltersAndRender(); };
 document.getElementById("cardDead").onclick = () => { movingFilter = "Dead"; abcFilter = ""; applyFiltersAndRender(); };
 document.getElementById("plantFilter").addEventListener("change", () => { mode = "all"; abcFilter = ""; movingFilter = ""; applyFiltersAndRender(); });
+document.getElementById("plantFilter").addEventListener("change", function() {
+    const plant = this.value;
+    const btn = document.getElementById("uploadBtn");
+    if (plant && sheetIds[plant]) {
+        const sheetId = sheetIds[plant];
+        const gasUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+        btn.href = gasUrl;
+        btn.style.display = "flex";
+    } else {
+        btn.style.display = "none";
+    }
+});
 document.getElementById("statusFilter").addEventListener("change", applyFiltersAndRender);
 ["leadTimeDays","safetyDays","coverDays","searchInput"].forEach(id => document.getElementById(id).addEventListener("input", applyFiltersAndRender));
 document.getElementById("exportBtn").onclick = exportToCSV;
