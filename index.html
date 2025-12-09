@@ -247,6 +247,7 @@ const rowsPerPage = 25;
 let users = [];
 let loggedUser = null;
 let inventoryUrl; // Dynamic based on selected Plant
+let selectedPlant = ""; // <-- เพิ่มบรรทัดนี้
 const userSheetID = '1eqVoLsZxGguEbRCC5rdI4iMVtQ7CK4T3uXRdx8zE3uw';
 const userSheetName = 'UserPlant';
 const userUrl = `https://opensheet.elk.sh/${userSheetID}/${userSheetName}`;
@@ -430,7 +431,7 @@ async function init() {
 }
 init();
 document.getElementById('viewBtn').addEventListener('click', () => {
-    const selectedPlant = document.getElementById('plantSelect').value;
+    selectedPlant = document.getElementById('plantSelect').value; // <-- เพิ่มบรรทัดนี้
     if (!selectedPlant) {
         alert('กรุณาเลือก Plant');
         return;
@@ -886,7 +887,10 @@ function fillPlantDropdown() {
     plants.forEach(p => sel.add(new Option(p, p)));
 }
 function setDefaultAndCalculate() {
-    document.getElementById("plantFilter").value = "";
+    const plantFilter = document.getElementById("plantFilter");
+    plantFilter.value = selectedPlant;
+    plantFilter.dispatchEvent(new Event('change'));
+
     document.getElementById("statusFilter").value = "";
     mode = "all"; abcFilter = ""; movingFilter = ""; statusFilter = "";
     applyFiltersAndRender();
