@@ -45,7 +45,7 @@
         .unit { font-size: 14px; color: #667eea; font-weight: 500; }
         .export-btn { padding: 12px; background: linear-gradient(135deg, #27ae60, #1e8449); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 6px 15px rgba(39,174,96,0.4); transition: all 0.3s; flex: 0 1 auto; margin-left: auto; }
         .table-container { overflow: auto; max-height: 70vh; position: relative; padding: 0 16px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1400px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); background: white; }
+        table { width: 100%; border-collapse: collapse; min-width: 1500px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); background: white; }
         thead { position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         th { padding: 14px 10px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         th:hover { background: rgba(255,255,255,0.1); }
@@ -67,7 +67,7 @@
         .moving-slowly { background: #f2f3f4; color: #616161; }
         .moving-dead { background: #f0f0f0; color: #7f8c8d; }
         .return-qty { background: #e74c3c; color: white; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
-        th:nth-child(5), td:nth-child(5), th:nth-child(6), td:nth-child(6), th:nth-child(7), td:nth-child(7), th:nth-child(8), td:nth-child(8), th:nth-child(9), td:nth-child(9), th:nth-child(10), td:nth-child(10), th:nth-child(11), td:nth-child(11), th:nth-child(12), td:nth-child(12), th:nth-child(13), td:nth-child(13), th:nth-child(14), td:nth-child(14), th:nth-child(16), td:nth-child(16), th:nth-child(20), td:nth-child(20), th:nth-child(21), td:nth-child(21) { text-align: center; }
+        th:nth-child(6), td:nth-child(6), th:nth-child(7), td:nth-child(7), th:nth-child(8), td:nth-child(8), th:nth-child(9), td:nth-child(9), th:nth-child(10), td:nth-child(10), th:nth-child(11), td:nth-child(11), th:nth-child(12), td:nth-child(12), th:nth-child(13), td:nth-child(13), th:nth-child(14), td:nth-child(14), th:nth-child(15), td:nth-child(15), th:nth-child(17), td:nth-child(17), th:nth-child(21), td:nth-child(21), th:nth-child(22), td:nth-child(22) { text-align: center; }
         .pagination { padding: 16px; text-align: center; background: #f8f9fa; font-size: 16px; font-weight: bold; color: #2c3e50; display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
         .page-btn { padding: 8px 14px; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .page-btn.active { background: #667eea; color: white; border: none; }
@@ -176,6 +176,7 @@
                     <th data-sort="Plant">Plant <i class="fas fa-sort sort-icon"></i></th>
                     <th data-sort="Material">Material <i class="fas fa-sort sort-icon"></i></th>
                     <th>รายการอะไหล่</th>
+                    <th>Storage bin</th>
                     <th data-sort="Unit">หน่วย</th>
                     <th data-sort="Unrestricted" title="จำนวนอะไหล่คงเหลือในคลัง">คงเหลือ <i class="fas fa-sort sort-icon"></i></th>
                     <th data-sort="Value" title="มูลค่าคงเหลือ = คงเหลือ * ราคาต่อหน่วย">มูลค่า <i class="fas fa-sort sort-icon"></i></th>
@@ -228,7 +229,6 @@ const userUrl = `https://opensheet.elk.sh/${userSheetID}/${userSheetName}`;
 const usageUrl = 'https://opensheet.elk.sh/1P8Frv1zvcuO3qt8seU-zMF0FV0TQHyKXLn9GNHVr6kI/MoveAllsum';
 const inventoryUrl = 'https://opensheet.elk.sh/1gtZLR5Tm574o5xRbdrRm9yFzRukGx_UAzUnoah36cxQ/Sheet1';
 const mainsapUrl = 'https://opensheet.elk.sh/1CkfOIe2nDYBLs5aPGkPyZhOeqJkyS7UQ6tuMzxy-mfk/mainsap';
-// ✅ เพิ่มฐานข้อมูลใหม่สำหรับ AvgVal
 const avgValUrl = 'https://opensheet.elk.sh/1nwXDN6FjmXOHXzlxVv6y0Kv4peU9kjW3q20PAWsp6_4/Sheet1';
 
 function toNumber(v) { return parseFloat((v||"0").toString().replace(/,/g,'')) || 0; }
@@ -372,9 +372,18 @@ async function loadData() {
         const mainsap = await mainsapRes.json();
         const avgValData = await avgValRes.json();
 
-        // ✅ 1. ตรวจสอบโครงสร้างข้อมูล usage
-        console.log("โครงสร้างข้อมูล usage (แถวแรก):", usage[0]);
-        console.log("คอลัมน์ที่มีใน usage:", Object.keys(usage[0] || {}));
+        // ✅ ตรวจสอบโครงสร้างข้อมูล inventory
+        console.log("โครงสร้างข้อมูล inventory (แถวแรก):", inv[0]);
+        console.log("คอลัมน์ที่มีใน inventory:", Object.keys(inv[0] || {}));
+
+        // ✅ ตรวจสอบคอลัมน์ Storage bin ใน inventory
+        const storageBinKeys = Object.keys(inv[0] || {}).filter(k => 
+            k.toLowerCase().includes('storage') || 
+            k.toLowerCase().includes('bin') ||
+            k.toLowerCase().includes('storagebin') ||
+            k.toLowerCase().includes('storage bin')
+        );
+        console.log("คอลัมน์ที่อาจเป็น Storage bin:", storageBinKeys);
 
         // ✅ 2. สร้าง Map สำหรับ AvgVal
         const avgValMap = new Map();
@@ -388,7 +397,7 @@ async function loadData() {
 
         console.log("จำนวนข้อมูล AvgVal ที่โหลดได้:", avgValMap.size);
 
-        // ✅ 3. สร้าง Map สำหรับข้อมูลการเบิก - แก้ไขให้ครอบคลุมรูปแบบคอลัมน์
+        // ✅ 3. สร้าง Map สำหรับข้อมูลการเบิก
         const usageMap = new Map();
         usage.forEach(r => {
             const plant = (r.Plant || '').toString().trim();
@@ -397,12 +406,10 @@ async function loadData() {
             if (plant && material) {
                 const key = `${plant}-${material}`;
                 
-                // ตรวจสอบคอลัมน์ต่างๆ ที่เป็นไปได้
                 let qty4m = 0;
                 let qty6m = 0;
                 let thirtyDay = 0;
                 
-                // ✅ ค้นหาชื่อคอลัมน์ที่มีข้อมูล
                 const rowKeys = Object.keys(r);
                 
                 // ค้นหาคอลัมน์สำหรับ 4 เดือน
@@ -449,7 +456,7 @@ async function loadData() {
 
         console.log("จำนวนข้อมูลการเบิกที่โหลดได้:", usageMap.size);
 
-        // ✅ 4. สร้าง Map สำหรับ mainsap
+        // ✅ 4. สร้าง Map สำหรับ mainsap (เฉพาะข้อมูลเพิ่มเติม)
         const mainsapMap = new Map();
         mainsap.forEach(r => {
             const mat = (r.Material || '').toString().trim();
@@ -462,7 +469,7 @@ async function loadData() {
             }
         });
 
-        // ✅ 5. สร้าง allData โดยผสานข้อมูล
+        // ✅ 5. สร้าง allData โดยใช้ข้อมูลจาก inventoryUrl เป็นหลัก
         allData = [];
         
         inv.forEach(r => {
@@ -474,13 +481,6 @@ async function loadData() {
                 
                 // ✅ หาข้อมูลการเบิก
                 const usageData = usageMap.get(key);
-                
-                if (usageData) {
-                    console.log(`พบข้อมูลการเบิกสำหรับ ${key}:`, usageData);
-                } else {
-                    console.log(`ไม่พบข้อมูลการเบิกสำหรับ ${key} - ใช้ค่าเริ่มต้น 0`);
-                }
-                
                 const usageInfo = usageData || { 
                     Qty4Month: 0, 
                     Qty6Month: 0, 
@@ -490,7 +490,7 @@ async function loadData() {
                 const main = mainsapMap.get(material) || { 
                     Note: '', 
                     MultiplyUnit: 1, 
-                    Product: '' 
+                    Product: ''
                 };
                 
                 // ✅ ดึงค่า AvgVal
@@ -503,6 +503,37 @@ async function loadData() {
                 const unrestricted = toNumber(r.Unrestricted || r["Unrestricted stock"] || 0);
                 const originalValue = toNumber(r["Value Unrestricted"] || r["Value unrestricted"] || 0);
                 
+                // ✅ ดึงข้อมูลจาก inventoryUrl
+                const description = r["Material description"] || '';
+                
+                // ✅ ดึง Storage bin จาก inventoryUrl
+                let storageBin = '';
+                const rowKeys = Object.keys(r);
+                const storageBinKey = rowKeys.find(k => 
+                    k.toLowerCase().includes('storage') && 
+                    k.toLowerCase().includes('bin')
+                ) || rowKeys.find(k => 
+                    k.toLowerCase().includes('storagebin')
+                ) || rowKeys.find(k => 
+                    k.toLowerCase().includes('bin')
+                );
+                
+                if (storageBinKey) {
+                    storageBin = (r[storageBinKey] || '').toString().trim();
+                }
+                
+                // ✅ ดึงหน่วยจาก inventoryUrl
+                let unit = r["Base Unit of Measure"] || '';
+                if (!unit) {
+                    const unitKey = rowKeys.find(k => 
+                        k.toLowerCase().includes('unit') || 
+                        k.toLowerCase().includes('uom')
+                    );
+                    if (unitKey) {
+                        unit = (r[unitKey] || '').toString().trim();
+                    }
+                }
+                
                 // ✅ คำนวณมูลค่า
                 let value;
                 if (avgVal > 0) {
@@ -514,8 +545,9 @@ async function loadData() {
                 allData.push({
                     Plant: plant,
                     Material: material,
-                    Description: r["Material description"] || '',
-                    Unit: r["Base Unit of Measure"] || '',
+                    Description: description,
+                    StorageBin: storageBin,
+                    Unit: unit,
                     Unrestricted: unrestricted,
                     Value: value,
                     Qty6Month: qty6m,
@@ -542,6 +574,9 @@ async function loadData() {
             console.log("ตัวอย่างข้อมูล 5 รายการแรก:");
             allData.slice(0, 5).forEach((item, index) => {
                 console.log(`${index + 1}. ${item.Plant}-${item.Material}:`, {
+                    Description: item.Description,
+                    StorageBin: item.StorageBin,
+                    Unit: item.Unit,
                     Qty4Month: item.Qty4Month,
                     Qty6Month: item.Qty6Month,
                     ThirtyDay: item.ThirtyDay,
@@ -553,6 +588,14 @@ async function loadData() {
             // นับจำนวนรายการที่มีข้อมูลการเบิก
             const withUsageData = allData.filter(item => item.Qty4Month > 0 || item.Qty6Month > 0 || item.ThirtyDay > 0);
             console.log(`จำนวนรายการที่มีข้อมูลการเบิก: ${withUsageData.length}/${allData.length}`);
+            
+            // ตรวจสอบว่ามี Storage bin หรือไม่
+            const withStorageBin = allData.filter(item => item.StorageBin);
+            console.log(`จำนวนรายการที่มีข้อมูล Storage bin: ${withStorageBin.length}/${allData.length}`);
+            
+            // ตรวจสอบว่ามีหน่วยหรือไม่
+            const withUnit = allData.filter(item => item.Unit);
+            console.log(`จำนวนรายการที่มีข้อมูลหน่วย: ${withUnit.length}/${allData.length}`);
         }
 
         calcABCValue();
@@ -572,6 +615,7 @@ async function loadData() {
         console.error("เกิดข้อผิดพลาด:", e);
     }
 }
+
 function calcABCValue() {
     const sorted = [...allData].sort((a,b) => b.Value - a.Value);
     const total = sorted.reduce((s,r) => s + r.Value, 0);
@@ -769,7 +813,7 @@ function renderTable() {
     const end = start + rowsPerPage;
     const pageData = filteredData.slice(start, end);
     if (pageData.length === 0) {
-        container.innerHTML = `<tr><td colspan="22" style="text-align:center;padding:50px;color:#95a5a6;font-size:16px;">ไม่มีข้อมูลตามเงื่อนไข</td></tr>`;
+        container.innerHTML = `<tr><td colspan="23" style="text-align:center;padding:50px;color:#95a5a6;font-size:16px;">ไม่มีข้อมูลตามเงื่อนไข</td></tr>`;
         return;
     }
     pageData.forEach(r => {
@@ -780,6 +824,7 @@ function renderTable() {
             <td>${r.Plant}</td>
             <td>${r.Material}</td>
             <td>${r.Description}</td>
+            <td>${r.StorageBin}</td>
             <td>${r.Unit}</td>
             <td>${formatNumber(r.Unrestricted)}</td>
             <td><span class="value">${formatCurrency(r.Value)}</span></td>
@@ -825,11 +870,11 @@ function renderPagination() {
 }
 
 function exportToCSV() {
-    const headers = ["Plant","Material","รายการอะไหล่","หน่วย","คงเหลือ","มูลค่า","ใช้ 6 เดือน","ใช้ 4 เดือน","เฉลี่ย/ด.","30Day","Mean","Safety","ROP","DOS","แนะนำสั่งซื้อ","หมายเหตุ","คูณหน่วย","Product","ABC","Moving","ส่งคืนได้ (ชิ้น)","% สะสม"];
+    const headers = ["Plant","Material","รายการอะไหล่","Storage bin","หน่วย","คงเหลือ","มูลค่า","ใช้ 6 เดือน","ใช้ 4 เดือน","เฉลี่ย/ด.","30Day","Mean","Safety","ROP","DOS","แนะนำสั่งซื้อ","หมายเหตุ","คูณหน่วย","Product","ABC","Moving","ส่งคืนได้ (ชิ้น)","% สะสม"];
     let csv = "\uFEFF" + headers.join(",") + "\n";
     filteredData.forEach(r => {
         const row = [
-            r.Plant, r.Material, r.Description.replace(/"/g, '""'), r.Unit,
+            r.Plant, r.Material, r.Description.replace(/"/g, '""'), r.StorageBin, r.Unit,
             r.Unrestricted, r.Value, r.Qty6Month, r.Qty4Month,
             r.AvgDailyUse.toFixed(1), r.ThirtyDay, r.Mean.toFixed(1), Math.round(r.SafetyStock), Math.round(r.ROP),
             r.DOS > 9999 ? "มาก" : r.DOS.toFixed(1), Math.round(r.RecommendedOrder),
