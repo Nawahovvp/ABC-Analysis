@@ -45,7 +45,7 @@
         .unit { font-size: 14px; color: #667eea; font-weight: 500; }
         .export-btn { padding: 12px; background: linear-gradient(135deg, #27ae60, #1e8449); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 6px 15px rgba(39,174,96,0.4); transition: all 0.3s; flex: 0 1 auto; margin-left: auto; }
         .table-container { overflow: auto; max-height: 70vh; position: relative; padding: 0 16px; }
-        table { width: 100%; border-collapse: collapse; min-width: 1500px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); background: white; }
+        table { width: 100%; border-collapse: collapse; min-width: 1600px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); background: white; }
         thead { position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         th { padding: 14px 10px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         th:hover { background: rgba(255,255,255,0.1); }
@@ -67,7 +67,11 @@
         .moving-slowly { background: #f2f3f4; color: #616161; }
         .moving-dead { background: #f0f0f0; color: #7f8c8d; }
         .return-qty { background: #e74c3c; color: white; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
-        th:nth-child(6), td:nth-child(6), th:nth-child(7), td:nth-child(7), th:nth-child(8), td:nth-child(8), th:nth-child(9), td:nth-child(9), th:nth-child(10), td:nth-child(10), th:nth-child(11), td:nth-child(11), th:nth-child(12), td:nth-child(12), th:nth-child(13), td:nth-child(13), th:nth-child(14), td:nth-child(14), th:nth-child(15), td:nth-child(15), th:nth-child(17), td:nth-child(17), th:nth-child(21), td:nth-child(21), th:nth-child(22), td:nth-child(22) { text-align: center; }
+        .status-pending { background: #fef9e7; color: #d35400; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
+        .status-approved { background: #d5f5e3; color: #1e8449; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
+        .status-rejected { background: #fdecea; color: #c0392b; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
+        .status-other { background: #f2f3f4; color: #616161; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
+        th:nth-child(6), td:nth-child(6), th:nth-child(7), td:nth-child(7), th:nth-child(8), td:nth-child(8), th:nth-child(9), td:nth-child(9), th:nth-child(10), td:nth-child(10), th:nth-child(11), td:nth-child(11), th:nth-child(12), td:nth-child(12), th:nth-child(13), td:nth-child(13), th:nth-child(14), td:nth-child(14), th:nth-child(15), td:nth-child(15), th:nth-child(17), td:nth-child(17), th:nth-child(21), td:nth-child(21), th:nth-child(22), td:nth-child(22), th:nth-child(23), td:nth-child(23) { text-align: center; }
         .pagination { padding: 16px; text-align: center; background: #f8f9fa; font-size: 16px; font-weight: bold; color: #2c3e50; display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
         .page-btn { padding: 8px 14px; background: white; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
         .page-btn.active { background: #667eea; color: white; border: none; }
@@ -166,6 +170,13 @@
                 <label><i class="fas fa-search control-icon"></i> ค้นหา:</label>
                 <input type="text" id="searchInput" placeholder="Material หรือ Description">
             </div>
+            <div class="control-group">
+                <label><i class="fas fa-filter control-icon"></i> Filter:Status:</label>
+                <select id="statusFilter">
+                    <option value="">ทุกสถานะ</option>
+                    <!-- ตัวเลือกจะถูกเพิ่มโดย JavaScript -->
+                </select>
+            </div>
             <button class="export-btn" id="exportBtn"><i class="fas fa-file-export"></i> Export</button>
         </div>
     </div>
@@ -196,6 +207,7 @@
                     <th data-sort="Moving" title="Fast: >=30/เดือน, Medium: >=12, Slow: >=0.7, Slowly: <0.7, Dead: =0">Moving</th>
                     <th data-sort="ReturnQty" title="จำนวนส่งคืน = max(0, คงเหลือ - Keep Qty), Keep Qty ขึ้นกับ Moving และ ABC">จำนวนส่งคืน</th>
                     <th data-sort="CumPercent" title="% มูลค่าสะสมจากมูลค่ารวม (เรียงจากสูงไปต่ำ)">%สะสม <i class="fas fa-sort sort-icon"></i></th>
+                    <th data-sort="Status">Status</th>
                 </tr>
             </thead>
             <tbody id="dataList"></tbody>
@@ -217,7 +229,7 @@
 <script>
 let sortKey = "CumPercent", sortDir = "asc";
 let allData = [], filteredData = [];
-let mode = "all", abcFilter = "", movingFilter = "";
+let mode = "all", abcFilter = "", movingFilter = "", statusFilter = "";
 let currentPage = 1;
 const rowsPerPage = 25;
 let users = [];
@@ -230,6 +242,7 @@ const usageUrl = 'https://opensheet.elk.sh/1P8Frv1zvcuO3qt8seU-zMF0FV0TQHyKXLn9G
 const inventoryUrl = 'https://opensheet.elk.sh/1gtZLR5Tm574o5xRbdrRm9yFzRukGx_UAzUnoah36cxQ/Sheet1';
 const mainsapUrl = 'https://opensheet.elk.sh/1CkfOIe2nDYBLs5aPGkPyZhOeqJkyS7UQ6tuMzxy-mfk/mainsap';
 const avgValUrl = 'https://opensheet.elk.sh/1nwXDN6FjmXOHXzlxVv6y0Kv4peU9kjW3q20PAWsp6_4/Sheet1';
+const statusUrl = 'https://opensheet.elk.sh/1yP1sq12fSXj00htJewUIugkQCaxA0smO2je7wtEISdw/Orders';
 
 function toNumber(v) { return parseFloat((v||"0").toString().replace(/,/g,'')) || 0; }
 function formatNumber(n) { return Number(n).toLocaleString('th-TH'); }
@@ -360,32 +373,118 @@ async function loadData() {
     tableSection.style.display = "none";
 
     try {
-        const [invRes, usageRes, mainsapRes, avgValRes] = await Promise.all([
+        const [invRes, usageRes, mainsapRes, avgValRes, statusRes] = await Promise.all([
             fetch(inventoryUrl),
             fetch(usageUrl),
             fetch(mainsapUrl),
-            fetch(avgValUrl)
+            fetch(avgValUrl),
+            fetch(statusUrl)
         ]);
 
         const inv = await invRes.json();
         const usage = await usageRes.json();
         const mainsap = await mainsapRes.json();
         const avgValData = await avgValRes.json();
+        const statusData = await statusRes.json();
+
+        // ✅ ตรวจสอบโครงสร้างข้อมูล status อย่างละเอียด
+        console.log("=== ข้อมูล Status จาก URL ===");
+        console.log("จำนวนแถวข้อมูล Status:", statusData.length);
+        console.log("แถวแรกของข้อมูล Status:", statusData[0]);
+        console.log("คอลัมน์ทั้งหมดที่มีในข้อมูล Status:", Object.keys(statusData[0] || {}));
+        
+        // ✅ แสดงค่าต่างๆ ในคอลัมน์เพื่อตรวจสอบ
+        if (statusData.length > 0) {
+            console.log("ตัวอย่างข้อมูล Status 5 รายการแรก:");
+            statusData.slice(0, 5).forEach((item, index) => {
+                console.log(`แถว ${index + 1}:`, {
+                    Plant: item.Plant,
+                    Material: item.Material,
+                    StatusMaterial: item.StatusMaterial,
+                    Status: item.Status,
+                    'สถานะวัสดุ': item['สถานะวัสดุ'],
+                    'Status Material': item['Status Material']
+                });
+            });
+        }
+
+        // ✅ ตรวจสอบคอลัมน์ที่อาจเป็น Status
+        const possibleStatusKeys = Object.keys(statusData[0] || {}).filter(key => 
+            key.toLowerCase().includes('status') || 
+            key.toLowerCase().includes('สถานะ') ||
+            key.toLowerCase().includes('material')
+        );
+        console.log("คอลัมน์ที่เป็นไปได้สำหรับ Status:", possibleStatusKeys);
+
+        // ✅ สร้าง Map สำหรับ Status - พิจารณาคอลัมน์ต่างๆ ที่เป็นไปได้
+        const statusMap = new Map();
+        statusData.forEach(r => {
+            const plant = (r.Plant || '').toString().trim();
+            const material = (r.Material || '').toString().trim();
+            
+            // หาคอลัมน์ Status จากหลายชื่อที่เป็นไปได้
+            let status = '';
+            const rowKeys = Object.keys(r);
+            
+            // ลองหาจากคอลัมน์ต่างๆ ที่อาจเป็น Status
+            const statusKeys = rowKeys.filter(k => 
+                k.toLowerCase().includes('StatusMaterial') ||
+                k.toLowerCase().includes('status material') ||
+                k.toLowerCase().includes('สถานะวัสดุ') ||
+                (k.toLowerCase().includes('status') && k.toLowerCase().includes('material'))
+            );
+            
+            if (statusKeys.length > 0) {
+                status = (r[statusKeys[0]] || '').toString().trim();
+            } else {
+                // ถ้าไม่เจอ ให้ลองหาคอลัมน์ที่มีคำว่า status
+                const altStatusKeys = rowKeys.filter(k => k.toLowerCase().includes('status'));
+                if (altStatusKeys.length > 0) {
+                    status = (r[altStatusKeys[0]] || '').toString().trim();
+                }
+            }
+            
+            if (plant && material && status) {
+                const key = `${plant}-${material}`;
+                statusMap.set(key, status);
+                console.log(`บันทึก Status สำหรับ ${key}: ${status}`);
+            } else if (plant && material) {
+                const key = `${plant}-${material}`;
+                console.log(`ไม่พบ Status สำหรับ ${key}`);
+            }
+        });
+
+        console.log("จำนวนข้อมูล Status ที่โหลดได้:", statusMap.size);
+        
+        // ✅ แสดงตัวอย่างข้อมูลใน Map
+        if (statusMap.size > 0) {
+            console.log("ตัวอย่างข้อมูลใน statusMap (5 รายการแรก):");
+            let count = 0;
+            for (let [key, value] of statusMap) {
+                if (count < 5) {
+                    console.log(`${key}: ${value}`);
+                    count++;
+                } else {
+                    break;
+                }
+            }
+        }
 
         // ✅ ตรวจสอบโครงสร้างข้อมูล inventory
-        console.log("โครงสร้างข้อมูล inventory (แถวแรก):", inv[0]);
-        console.log("คอลัมน์ที่มีใน inventory:", Object.keys(inv[0] || {}));
+        console.log("=== ข้อมูล Inventory จาก URL ===");
+        console.log("จำนวนแถวข้อมูล Inventory:", inv.length);
+        if (inv.length > 0) {
+            console.log("ตัวอย่างข้อมูล Inventory 3 รายการแรก:");
+            inv.slice(0, 3).forEach((item, index) => {
+                console.log(`แถว ${index + 1}:`, {
+                    Plant: item.Plant,
+                    Material: item.Material,
+                    Description: item["Material description"]
+                });
+            });
+        }
 
-        // ✅ ตรวจสอบคอลัมน์ Storage bin ใน inventory
-        const storageBinKeys = Object.keys(inv[0] || {}).filter(k => 
-            k.toLowerCase().includes('storage') || 
-            k.toLowerCase().includes('bin') ||
-            k.toLowerCase().includes('storagebin') ||
-            k.toLowerCase().includes('storage bin')
-        );
-        console.log("คอลัมน์ที่อาจเป็น Storage bin:", storageBinKeys);
-
-        // ✅ 2. สร้าง Map สำหรับ AvgVal
+        // ✅ สร้าง Map สำหรับ AvgVal
         const avgValMap = new Map();
         avgValData.forEach(r => {
             const material = (r.Material || '').toString().trim();
@@ -397,7 +496,7 @@ async function loadData() {
 
         console.log("จำนวนข้อมูล AvgVal ที่โหลดได้:", avgValMap.size);
 
-        // ✅ 3. สร้าง Map สำหรับข้อมูลการเบิก
+        // ✅ สร้าง Map สำหรับข้อมูลการเบิก
         const usageMap = new Map();
         usage.forEach(r => {
             const plant = (r.Plant || '').toString().trim();
@@ -456,7 +555,7 @@ async function loadData() {
 
         console.log("จำนวนข้อมูลการเบิกที่โหลดได้:", usageMap.size);
 
-        // ✅ 4. สร้าง Map สำหรับ mainsap (เฉพาะข้อมูลเพิ่มเติม)
+        // ✅ สร้าง Map สำหรับ mainsap (เฉพาะข้อมูลเพิ่มเติม)
         const mainsapMap = new Map();
         mainsap.forEach(r => {
             const mat = (r.Material || '').toString().trim();
@@ -469,7 +568,7 @@ async function loadData() {
             }
         });
 
-        // ✅ 5. สร้าง allData โดยใช้ข้อมูลจาก inventoryUrl เป็นหลัก
+        // ✅ สร้าง allData โดยใช้ข้อมูลจาก inventoryUrl เป็นหลัก
         allData = [];
         
         inv.forEach(r => {
@@ -492,6 +591,12 @@ async function loadData() {
                     MultiplyUnit: 1, 
                     Product: ''
                 };
+                
+                // ✅ ดึงค่า Status
+                const status = statusMap.get(key) || '';
+                if (status) {
+                    console.log(`พบ Status สำหรับ ${key}: ${status}`);
+                }
                 
                 // ✅ ดึงค่า AvgVal
                 const avgVal = avgValMap.get(material) || 0;
@@ -562,40 +667,55 @@ async function loadData() {
                     MultiplyUnit: main.MultiplyUnit,
                     Product: main.Product,
                     AvgVal: avgVal,
-                    OriginalValue: originalValue
+                    OriginalValue: originalValue,
+                    Status: status
                 });
             }
         });
 
-        // ✅ 6. ตรวจสอบข้อมูลตัวอย่าง
+        // ✅ ตรวจสอบข้อมูลตัวอย่าง
+        console.log(`=== สรุปข้อมูล ===`);
         console.log(`สร้าง allData สำเร็จ: ${allData.length} รายการ`);
         
         if (allData.length > 0) {
-            console.log("ตัวอย่างข้อมูล 5 รายการแรก:");
+            console.log("ตัวอย่างข้อมูล allData 5 รายการแรก:");
             allData.slice(0, 5).forEach((item, index) => {
                 console.log(`${index + 1}. ${item.Plant}-${item.Material}:`, {
                     Description: item.Description,
                     StorageBin: item.StorageBin,
                     Unit: item.Unit,
+                    Status: item.Status || "(ไม่มีสถานะ)",
                     Qty4Month: item.Qty4Month,
-                    Qty6Month: item.Qty6Month,
-                    ThirtyDay: item.ThirtyDay,
-                    Value: item.Value,
-                    Unrestricted: item.Unrestricted
+                    Value: item.Value
                 });
             });
             
-            // นับจำนวนรายการที่มีข้อมูลการเบิก
-            const withUsageData = allData.filter(item => item.Qty4Month > 0 || item.Qty6Month > 0 || item.ThirtyDay > 0);
-            console.log(`จำนวนรายการที่มีข้อมูลการเบิก: ${withUsageData.length}/${allData.length}`);
+            // นับจำนวนรายการที่มี Status
+            const withStatus = allData.filter(item => item.Status && item.Status.trim() !== '');
+            console.log(`จำนวนรายการที่มีข้อมูล Status: ${withStatus.length}/${allData.length}`);
             
-            // ตรวจสอบว่ามี Storage bin หรือไม่
-            const withStorageBin = allData.filter(item => item.StorageBin);
-            console.log(`จำนวนรายการที่มีข้อมูล Storage bin: ${withStorageBin.length}/${allData.length}`);
+            // แสดงสถานะต่างๆ ที่มี
+            const statusCounts = {};
+            allData.forEach(item => {
+                const status = item.Status && item.Status.trim() !== '' ? item.Status : 'ไม่มีสถานะ';
+                statusCounts[status] = (statusCounts[status] || 0) + 1;
+            });
+            console.log("จำนวนรายการตามสถานะ:", statusCounts);
             
-            // ตรวจสอบว่ามีหน่วยหรือไม่
-            const withUnit = allData.filter(item => item.Unit);
-            console.log(`จำนวนรายการที่มีข้อมูลหน่วย: ${withUnit.length}/${allData.length}`);
+            // สร้างรายการสถานะ unique สำหรับ dropdown
+            const uniqueStatuses = [...new Set(allData.map(item => item.Status).filter(s => s && s.trim() !== ''))].sort();
+            console.log("สถานะต่างๆ ที่พบ:", uniqueStatuses);
+            
+            // อัปเดต dropdown status filter
+            const statusFilterSelect = document.getElementById("statusFilter");
+            statusFilterSelect.innerHTML = '<option value="">ทุกสถานะ</option>';
+            uniqueStatuses.forEach(status => {
+                statusFilterSelect.add(new Option(status, status));
+            });
+            // เพิ่มตัวเลือกสำหรับไม่มีสถานะ
+            if (statusCounts['ไม่มีสถานะ'] > 0) {
+                statusFilterSelect.add(new Option('ไม่มีสถานะ', 'ไม่มีสถานะ'));
+            }
         }
 
         calcABCValue();
@@ -698,7 +818,8 @@ function fillPlantDropdown() {
 
 function setDefaultAndCalculate() {
     document.getElementById("plantFilter").value = "";
-    mode = "all"; abcFilter = ""; movingFilter = "";
+    document.getElementById("statusFilter").value = "";
+    mode = "all"; abcFilter = ""; movingFilter = ""; statusFilter = "";
     applyFiltersAndRender();
 }
 
@@ -719,22 +840,38 @@ function applyFiltersAndRender() {
     let data = [...allData];
     const plant = document.getElementById("plantFilter").value;
     if (plant) data = data.filter(r => r.Plant === plant);
+    
     const search = document.getElementById("searchInput").value.toLowerCase();
     if (search) data = data.filter(r => r.Material.toLowerCase().includes(search) || r.Description.toLowerCase().includes(search));
+    
+    const statusFilterVal = document.getElementById("statusFilter").value;
+    if (statusFilterVal) {
+        if (statusFilterVal === "ไม่มีสถานะ") {
+            data = data.filter(r => !r.Status || r.Status.trim() === "");
+        } else {
+            data = data.filter(r => r.Status === statusFilterVal);
+        }
+    }
+    
     const params = {
         leadTime: parseInt(document.getElementById("leadTimeDays").value) || 5,
         safety: parseInt(document.getElementById("safetyDays").value) || 3,
         cover: parseInt(document.getElementById("coverDays").value) || 40
     };
+    
     recalculateStockFields(data, params);
     let baseData = [...data];
+    
     if (mode === "onlyOrder") data = data.filter(r => Math.round(r.RecommendedOrder) >= 1);
     else if (mode === "returnable") data = data.filter(r => r.ReturnQty > 0);
     else if (mode === "afterReturn") data = data.map(r => ({...r, Unrestricted: r.Unrestricted - r.ReturnQty, Value: r.Value - r.ReturnValue}));
+    
     if (abcFilter) data = data.filter(r => r.ABCValue === abcFilter);
     if (movingFilter) data = data.filter(r => r.Moving === movingFilter);
+    
     data.sort((a,b) => b.Value - a.Value);
     filteredData = data;
+    
     filteredData.sort((a, b) => {
         let x = a[sortKey] || 0;
         let y = b[sortKey] || 0;
@@ -742,6 +879,7 @@ function applyFiltersAndRender() {
         if (typeof y === "string") y = y.toLowerCase();
         return sortDir === "asc" ? (x > y ? 1 : -1) : (x < y ? 1 : -1);
     });
+    
     currentPage = 1;
     renderTable();
     renderPagination();
@@ -755,6 +893,7 @@ function updateAllCards(baseData, filteredData) {
     let total_usage_4m_base = 0;
     let totalStock_base = 0;
     let totalReturnValue_base = 0;
+    
     filteredData.forEach(r => {
         totalStock += r.Value;
         abc[r.ABCValue] += r.Value; cntABC[r.ABCValue]++;
@@ -767,6 +906,7 @@ function updateAllCards(baseData, filteredData) {
         if (r.ReturnQty > 0) returnCount++;
         totalReturnValue += r.ReturnValue;
     });
+    
     baseData.forEach(r => {
         totalStock_base += r.Value;
         totalReturnValue_base += r.ReturnValue;
@@ -775,10 +915,12 @@ function updateAllCards(baseData, filteredData) {
             total_usage_4m_base += r.Qty4Month * unit_price;
         }
     });
+    
     const monthly_withdrawal = total_usage_4m_base / 4 || 0;
     const daily_usage = total_usage_4m_base / 120 || 0;
     const stock_days = daily_usage > 0 ? Math.round(totalStock_base / daily_usage) : 'N/A';
     const after_stock_days = daily_usage > 0 ? Math.round((totalStock_base - totalReturnValue_base) / daily_usage) : 'N/A';
+    
     document.getElementById("totalStockValue").textContent = formatShortCurrency(totalStock);
     document.getElementById("orderTotalValue").textContent = formatShortCurrency(orderValue);
     document.getElementById("sumA").textContent = formatShortCurrency(abc.A);
@@ -806,19 +948,35 @@ function updateAllCards(baseData, filteredData) {
     document.getElementById("countDead").textContent = cntMov.Dead + " รายการ";
 }
 
+function getStatusClass(status) {
+    if (!status || status.trim() === '') return "status-other";
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('pending') || statusLower.includes('รอดำเนินการ') || statusLower.includes('pending')) return "status-pending";
+    if (statusLower.includes('approved') || statusLower.includes('อนุมัติ') || statusLower.includes('approve')) return "status-approved";
+    if (statusLower.includes('rejected') || statusLower.includes('ปฏิเสธ') || statusLower.includes('reject')) return "status-rejected";
+    if (statusLower.includes('complete') || statusLower.includes('เสร็จสิ้น') || statusLower.includes('completed')) return "status-approved";
+    if (statusLower.includes('active') || statusLower.includes('ใช้งาน') || statusLower.includes('active')) return "status-approved";
+    return "status-other";
+}
+
 function renderTable() {
     const container = document.getElementById("dataList");
     container.innerHTML = "";
     const start = (currentPage-1)*rowsPerPage;
     const end = start + rowsPerPage;
     const pageData = filteredData.slice(start, end);
+    
     if (pageData.length === 0) {
-        container.innerHTML = `<tr><td colspan="23" style="text-align:center;padding:50px;color:#95a5a6;font-size:16px;">ไม่มีข้อมูลตามเงื่อนไข</td></tr>`;
+        container.innerHTML = `<tr><td colspan="24" style="text-align:center;padding:50px;color:#95a5a6;font-size:16px;">ไม่มีข้อมูลตามเงื่อนไข</td></tr>`;
         return;
     }
+    
     pageData.forEach(r => {
         const orderQty = Math.round(r.RecommendedOrder);
         const orderClass = orderQty === 0 ? "order-0" : orderQty <= 10 ? "order-1-10" : orderQty <= 50 ? "order-11-50" : orderQty <= 200 ? "order-51-200" : "order-200";
+        const statusClass = getStatusClass(r.Status);
+        const displayStatus = r.Status && r.Status.trim() !== '' ? r.Status : "-";
+        
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${r.Plant}</td>
@@ -844,6 +1002,7 @@ function renderTable() {
             <td><span class="moving-${r.Moving.toLowerCase()}">${r.Moving}</span></td>
             <td><span class="return-qty">${formatNumber(r.ReturnQty)}</span></td>
             <td>${r.CumPercent.toFixed(1)}%</td>
+            <td><span class="${statusClass}">${displayStatus}</span></td>
         `;
         container.appendChild(row);
     });
@@ -870,7 +1029,7 @@ function renderPagination() {
 }
 
 function exportToCSV() {
-    const headers = ["Plant","Material","รายการอะไหล่","Storage bin","หน่วย","คงเหลือ","มูลค่า","ใช้ 6 เดือน","ใช้ 4 เดือน","เฉลี่ย/ด.","30Day","Mean","Safety","ROP","DOS","แนะนำสั่งซื้อ","หมายเหตุ","คูณหน่วย","Product","ABC","Moving","ส่งคืนได้ (ชิ้น)","% สะสม"];
+    const headers = ["Plant","Material","รายการอะไหล่","Storage bin","หน่วย","คงเหลือ","มูลค่า","ใช้ 6 เดือน","ใช้ 4 เดือน","เฉลี่ย/ด.","30Day","Mean","Safety","ROP","DOS","แนะนำสั่งซื้อ","หมายเหตุ","คูณหน่วย","Product","ABC","Moving","ส่งคืนได้ (ชิ้น)","% สะสม","Status"];
     let csv = "\uFEFF" + headers.join(",") + "\n";
     filteredData.forEach(r => {
         const row = [
@@ -879,7 +1038,7 @@ function exportToCSV() {
             r.AvgDailyUse.toFixed(1), r.ThirtyDay, r.Mean.toFixed(1), Math.round(r.SafetyStock), Math.round(r.ROP),
             r.DOS > 9999 ? "มาก" : r.DOS.toFixed(1), Math.round(r.RecommendedOrder),
             r.Note, r.MultiplyUnit, r.Product,
-            r.ABCValue, r.Moving, r.ReturnQty, r.CumPercent.toFixed(2)
+            r.ABCValue, r.Moving, r.ReturnQty, r.CumPercent.toFixed(2), r.Status || ""
         ];
         csv += row.map(v => `"${v}"`).join(",") + "\n";
     });
@@ -905,6 +1064,7 @@ document.getElementById("cardSlow").onclick = () => { movingFilter = "Slow"; abc
 document.getElementById("cardSlowly").onclick = () => { movingFilter = "Slowly"; abcFilter = ""; applyFiltersAndRender(); };
 document.getElementById("cardDead").onclick = () => { movingFilter = "Dead"; abcFilter = ""; applyFiltersAndRender(); };
 document.getElementById("plantFilter").addEventListener("change", () => { mode = "all"; abcFilter = ""; movingFilter = ""; applyFiltersAndRender(); });
+document.getElementById("statusFilter").addEventListener("change", applyFiltersAndRender);
 ["leadTimeDays","safetyDays","coverDays","searchInput"].forEach(id => document.getElementById(id).addEventListener("input", applyFiltersAndRender));
 document.getElementById("exportBtn").onclick = exportToCSV;
 </script>
