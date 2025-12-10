@@ -887,80 +887,109 @@ document.getElementById("tableHeader").addEventListener("click",e=>{
 
 /* ปรับให้ Filter ผู้รับคืนอ้างอิงชุดข้อมูลตาม Card ที่กด */
 function applyFiltersAndRender(){
-    let data=[...allData];
+    // 1) เริ่มจากข้อมูลทั้งหมดของ Plant ที่โหลดมาแล้ว
+    let data = [...allData];
 
-    const search=document.getElementById("searchInput").value.toLowerCase();
-    if(search){
-        data=data.filter(r=>
-            r.Material.toLowerCase().includes(search)||
+    // 2) ค้นหา (Material / Description)
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    if (search) {
+        data = data.filter(r =>
+            r.Material.toLowerCase().includes(search) ||
             r.Description.toLowerCase().includes(search)
         );
     }
 
-    const statusVal=document.getElementById("statusFilter").value;
-    if(statusVal){
-        if(statusVal==="ไม่มีสถานะ") data=data.filter(r=>!r.Status||r.Status.trim()==="");
-        else data=data.filter(r=>r.Status===statusVal);
-    }
-
-    const params={
-        leadTime:parseInt(document.getElementById("leadTimeDays").value)||5,
-        safety:parseInt(document.getElementById("safetyDays").value)||3,
-        cover:parseInt(document.getElementById("coverDays").value)||40
-    };
-    recalculateStockFields(data,params);
-
-    let baseData=[...data];  // ใช้สำหรับการ์ดต่างๆ (จะกรอง Owner ตามด้านล่าง)
-
-    // ชุดสำหรับแสดงตาราง (อิง Card / Mode / ABC / Moving)
-    let viewData=[...data];
-
-    if(mode==="onlyOrder"){
-        viewData=viewData.filter(r=>Math.round(r.RecommendedOrder)>=1);
-        calcABCForMode(viewData,"order");
-    }else if(mode==="returnable"){
-        viewData=viewData.filter(r=>r.ReturnQty>0);
-        calcABCForMode(viewData,"return");
-    }else if(mode==="afterReturn"){
-        viewData=viewData.map(r=>({...r,Unrestricted:r.Unrestricted-r.ReturnQty,Value:r.Value-r.ReturnValue}));
-    }
-
-    if(abcFilter) viewData=viewData.filter(r=>r.ABCValue===abcFilter);
-    if(movingFilter) viewData=viewData.filter(r=>r.Moving===movingFilter);
-
-    if(mode==="all" && !abcFilter && !movingFilter){
-        viewData=viewData.filter(r=>r.Qty6Month>0);
-    }
-
-    // อัปเดตตัวเลือก Filter ผู้รับคืน ตามข้อมูลในโหมดปัจจุบัน (ก่อนกรอง Owner)
-    populateOwnerFilter(viewData);
-
-    // กรองตาม Owner (ผู้รับคืน) ทั้ง baseData และ viewData
-    const ownerVal=document.getElementById("responsibleFilter").value;
-    if(ownerVal){
-        if(ownerVal==="__EMPTY__"){
-            viewData=viewData.filter(r=>!r.OwnerId);
-            baseData=baseData.filter(r=>!r.OwnerId);
-        }else{
-            viewData=viewData.filter(r=>r.OwnerId===ownerVal);
-            baseData=baseData.filter(r=>r.OwnerId===ownerVal);
+    // 3) Filter Status
+    const statusVal = document.getElementById("statusFilter").value;
+    if (statusVal) {
+        if (statusVal === "ไม่มีสถานะ") {
+            data = data.filter(r => !r.Status || r.Status.trim() === "");
+        } else {
+            data = data.filter(r => r.Status === statusVal);
         }
     }
 
-    filteredData=[...viewData];
+    // 4) คำนวณ stock fields ตาม LeadTime / Safety / Cover
+    const params = {
+        leadTime: parseInt(document.getElementById("leadTimeDays").value) || 5,
+        safety:   parseInt(document.getElementById("safetyDays").value) || 3,
+        cover:    parseInt(document.getElementById("coverDays").value) || 40
+    };
+    recalculateStockFields(data, params);
 
-    filteredData.sort((a,b)=>{
-        let x=a[sortKey]||0;
-        let y=b[sortKey]||0;
-        if(typeof x==="string")x=x.toLowerCase();
-        if(typeof y==="string")y=y.toLowerCase();
-        return sortDir==="asc"?(x>y?1:-1):(x<y?1:-1);
+    // baseData = ชุดข้อมูลที่ใช้คำนวณการ์ดหลัก (หลังจากฟิลเตอร์ต่างๆ + ผู้รับผิดชอบ)
+    let baseData = [...data];
+
+    // viewData = ชุดข้อมูลที่ใช้แสดงในตาราง (จะถูกกรองตามโหมด + ABC/Moving)
+    let viewData = [...data];
+
+    // 5) กรองตามโหมด Card (Total / Order / OverStock)
+    if (mode === "onlyOrder") {
+        viewData = viewData.filter(r => Math.round(r.RecommendedOrder) >= 1);
+    } else if (mode === "returnable") {
+        viewData = viewData.filter(r => r.ReturnQty > 0);
+    } else if (mode === "afterReturn") {
+        viewData = viewData.map(r => ({
+            ...r,
+            Unrestricted: r.Unrestricted - r.ReturnQty,
+            Value: r.Value - r.ReturnValue
+        }));
+    }
+
+    // 6) สร้างตัวเลือก Filter "ผู้รับคืน" จากข้อมูลตามโหมด (แต่ยังไม่กรอง Owner)
+    populateOwnerFilter(viewData);
+
+    // 7) กรองตาม Owner (ผู้รับคืน) ให้มีผลทั้งกับ baseData และ viewData
+    const ownerVal = document.getElementById("responsibleFilter").value;
+    if (ownerVal) {
+        if (ownerVal === "__EMPTY__") {
+            viewData = viewData.filter(r => !r.OwnerId);
+            baseData = baseData.filter(r => !r.OwnerId);
+        } else {
+            viewData = viewData.filter(r => r.OwnerId === ownerVal);
+            baseData = baseData.filter(r => r.OwnerId === ownerVal);
+        }
+    }
+
+    // 8) คำนวณ ABC สำหรับชุดข้อมูลปัจจุบัน "หลังจาก" กรอง Owner แล้ว
+    if (mode === "onlyOrder") {
+        calcABCForMode(viewData, "order");
+    } else if (mode === "returnable") {
+        calcABCForMode(viewData, "return");
+    } else {
+        // โหมดปกติ ใช้ Value รวมทั้งชุด
+        calcABCForMode(viewData, "normal");
+    }
+
+    // 9) กรองต่อด้วย Card ABC / Moving ถ้ามีการเลือก
+    if (abcFilter) {
+        viewData = viewData.filter(r => r.ABCValue === abcFilter);
+    }
+    if (movingFilter) {
+        viewData = viewData.filter(r => r.Moving === movingFilter);
+    }
+
+    // 10) ในโหมด all (มุมมองรวม) ถ้าไม่ได้กด ABC/Moving ให้ตัดตัวที่ไม่มีการเคลื่อนไหว 6 เดือนออก
+    if (mode === "all" && abcFilter === "" && movingFilter === "") {
+        viewData = viewData.filter(r => r.Qty6Month > 0);
+    }
+
+    // 11) เซ็ต filteredData สำหรับตาราง แล้ว sort ตามหัวคอลัมน์
+    filteredData = [...viewData];
+    filteredData.sort((a, b) => {
+        let x = a[sortKey] || 0;
+        let y = b[sortKey] || 0;
+        if (typeof x === "string") x = x.toLowerCase();
+        if (typeof y === "string") y = y.toLowerCase();
+        return sortDir === "asc" ? (x > y ? 1 : -1) : (x < y ? 1 : -1);
     });
 
-    currentPage=1;
+    currentPage = 1;
     renderTable();
     renderPagination();
-    updateAllCards(baseData,filteredData);
+
+    // 12) อัปเดตการ์ดทั้งหมด โดยใช้ baseData (ชุดใหญ่หลังฟิลเตอร์) + filteredData (ชุดที่แสดงบนตาราง)
+    updateAllCards(baseData, filteredData);
 }
 
 function calcABCForMode(data,modeType){
@@ -995,93 +1024,126 @@ function calcABCForMode(data,modeType){
     });
 }
 
-function updateAllCards(baseData,filteredData){
-    const abc={A:0,B:0,C:0},cntABC={A:0,B:0,C:0};
-    const mov={Fast:0,Medium:0,Slow:0,Slowly:0,Dead:0},cntMov={Fast:0,Medium:0,Slow:0,Slowly:0,Dead:0};
+function updateAllCards(baseData, filteredData) {
+    // 1) สรุป ABC และ Moving จากข้อมูลที่ "แสดงอยู่จริงบนตาราง"
+    const abc = { A:0, B:0, C:0 }, cntABC = { A:0, B:0, C:0 };
+    const mov = { Fast:0, Medium:0, Slow:0, Slowly:0, Dead:0 },
+          cntMov = { Fast:0, Medium:0, Slow:0, Slowly:0, Dead:0 };
 
-    filteredData.forEach(r=>{
-        if(r.Qty6Month<=0)return;
-        let val=0;
-        if(mode==="onlyOrder")val=r.RecommendedOrder*(r.Unrestricted>0?r.Value/r.Unrestricted:0);
-        else if(mode==="returnable")val=r.ReturnValue;
-        else val=r.Value;
-        abc[r.ABCValue]+=val;
-        cntABC[r.ABCValue]++;
-        mov[r.Moving]+=val;
-        cntMov[r.Moving]++;
+    filteredData.forEach(r => {
+        // ✅ เดิมตัดตัว Qty6Month <= 0 ออก ทำให้ยอดการ์ดไม่เท่าตารางในบางกรณี
+        // ถ้าต้องการให้เฉพาะโหมด all ใช้เงื่อนไขนี้ ให้เช็ค mode แทน:
+        if (mode === "all" && r.Qty6Month <= 0) return;
+
+        let valueToUse = 0;
+        if (mode === "onlyOrder") {
+            valueToUse = r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+        } else if (mode === "returnable") {
+            valueToUse = r.ReturnValue;
+        } else {
+            valueToUse = r.Value;
+        }
+
+        if (r.ABCValue && abc.hasOwnProperty(r.ABCValue)) {
+            abc[r.ABCValue] += valueToUse;
+            cntABC[r.ABCValue]++;
+        }
+
+        if (r.Moving && mov.hasOwnProperty(r.Moving)) {
+            mov[r.Moving] += valueToUse;
+            cntMov[r.Moving]++;
+        }
     });
 
-    document.getElementById("sumA").textContent=formatShortCurrency(abc.A);
-    document.getElementById("sumB").textContent=formatShortCurrency(abc.B);
-    document.getElementById("sumC").textContent=formatShortCurrency(abc.C);
-    document.getElementById("countA").textContent=cntABC.A+" รายการ";
-    document.getElementById("countB").textContent=cntABC.B+" รายการ";
-    document.getElementById("countC").textContent=cntABC.C+" รายการ";
+    // อัปเดตการ์ด A/B/C
+    document.getElementById("sumA").textContent   = formatShortCurrency(abc.A);
+    document.getElementById("sumB").textContent   = formatShortCurrency(abc.B);
+    document.getElementById("sumC").textContent   = formatShortCurrency(abc.C);
+    document.getElementById("countA").textContent = cntABC.A + " รายการ";
+    document.getElementById("countB").textContent = cntABC.B + " รายการ";
+    document.getElementById("countC").textContent = cntABC.C + " รายการ";
 
-    document.getElementById("valFast").textContent=formatShortCurrency(mov.Fast);
-    document.getElementById("valMedium").textContent=formatShortCurrency(mov.Medium);
-    document.getElementById("valSlow").textContent=formatShortCurrency(mov.Slow);
-    document.getElementById("valSlowly").textContent=formatShortCurrency(mov.Slowly);
-    document.getElementById("valDead").textContent=formatShortCurrency(mov.Dead);
-    document.getElementById("countFast").textContent=cntMov.Fast+" รายการ";
-    document.getElementById("countMedium").textContent=cntMov.Medium+" รายการ";
-    document.getElementById("countSlow").textContent=cntMov.Slow+" รายการ";
-    document.getElementById("countSlowly").textContent=cntMov.Slowly+" รายการ";
-    document.getElementById("countDead").textContent=cntMov.Dead+" รายการ";
+    // อัปเดตการ์ด Moving
+    document.getElementById("valFast").textContent   = formatShortCurrency(mov.Fast);
+    document.getElementById("valMedium").textContent = formatShortCurrency(mov.Medium);
+    document.getElementById("valSlow").textContent   = formatShortCurrency(mov.Slow);
+    document.getElementById("valSlowly").textContent = formatShortCurrency(mov.Slowly);
+    document.getElementById("valDead").textContent   = formatShortCurrency(mov.Dead);
+    document.getElementById("countFast").textContent   = cntMov.Fast   + " รายการ";
+    document.getElementById("countMedium").textContent = cntMov.Medium + " รายการ";
+    document.getElementById("countSlow").textContent   = cntMov.Slow   + " รายการ";
+    document.getElementById("countSlowly").textContent = cntMov.Slowly + " รายการ";
+    document.getElementById("countDead").textContent   = cntMov.Dead   + " รายการ";
 
+    // 2) การ์ดหลัก (มูลค่ารวม / Order / OverStock) ใช้ baseData
     let dataForMainCards;
-    if(mode==="onlyOrder"){
-        dataForMainCards=baseData.filter(r=>Math.round(r.RecommendedOrder)>=1);
-    }else if(mode==="returnable"){
-        dataForMainCards=baseData.filter(r=>r.ReturnQty>0);
-    }else{
-        dataForMainCards=baseData.filter(r=>r.Qty6Month>0);
+    if (mode === "onlyOrder") {
+        dataForMainCards = baseData.filter(r => Math.round(r.RecommendedOrder) >= 1);
+    } else if (mode === "returnable") {
+        dataForMainCards = baseData.filter(r => r.ReturnQty > 0);
+    } else {
+        dataForMainCards = baseData.filter(r => r.Qty6Month > 0);
     }
 
-    let totalStock=0,orderItems=0,orderValue=0,returnCount=0,totalReturnValue=0,filteredForTotalCount=0;
-    dataForMainCards.forEach(r=>{
+    let totalStock = 0,
+        orderItems = 0,
+        orderValue = 0,
+        returnCount = 0,
+        totalReturnValue = 0,
+        filteredForTotalCount = 0;
+
+    dataForMainCards.forEach(r => {
         filteredForTotalCount++;
-        if(mode==="onlyOrder"){
-            totalStock+=r.RecommendedOrder*(r.Unrestricted>0?r.Value/r.Unrestricted:0);
-        }else if(mode==="returnable"){
-            totalStock+=r.ReturnValue;
-        }else{
-            totalStock+=r.Value;
+
+        if (mode === "onlyOrder") {
+            totalStock += r.RecommendedOrder * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
+        } else if (mode === "returnable") {
+            totalStock += r.ReturnValue;
+        } else {
+            totalStock += r.Value;
         }
-        const q=Math.round(r.RecommendedOrder);
-        if(q>0){
+
+        const qty = Math.round(r.RecommendedOrder);
+        if (qty > 0) {
             orderItems++;
-            orderValue+=q*(r.Unrestricted>0?r.Value/r.Unrestricted:0);
+            orderValue += qty * (r.Unrestricted > 0 ? r.Value / r.Unrestricted : 0);
         }
-        if(r.ReturnQty>0)returnCount++;
-        totalReturnValue+=r.ReturnValue;
+
+        if (r.ReturnQty > 0) returnCount++;
+        totalReturnValue += r.ReturnValue;
     });
 
-    document.getElementById("totalStockValue").textContent=formatShortCurrency(totalStock);
-    document.getElementById("orderTotalValue").textContent=formatShortCurrency(orderValue);
-    document.getElementById("totalCount").textContent=filteredForTotalCount+" รายการ";
-    document.getElementById("orderItemCount").textContent=orderItems;
-    document.getElementById("returnItemCount").textContent=returnCount+" รายการ";
-    document.getElementById("returnValue").textContent=formatShortCurrency(totalReturnValue);
+    document.getElementById("totalStockValue").textContent = formatShortCurrency(totalStock);
+    document.getElementById("orderTotalValue").textContent = formatShortCurrency(orderValue);
+    document.getElementById("totalCount").textContent      = filteredForTotalCount + " รายการ";
+    document.getElementById("orderItemCount").textContent  = orderItems;
+    document.getElementById("returnItemCount").textContent = returnCount + " รายการ";
+    document.getElementById("returnValue").textContent     = formatShortCurrency(totalReturnValue);
 
-    let total_usage_4m_base=0,totalStock_base=0,totalReturnValue_base=0;
-    baseData.forEach(r=>{
-        if(r.Qty6Month>0){
-            totalStock_base+=r.Value;
-            totalReturnValue_base+=r.ReturnValue;
-            if(r.Unrestricted>0){
-                const unit_price=r.Value/r.Unrestricted;
-                total_usage_4m_base+=r.Qty4Month*unit_price;
+    // 3) เบิก/เดือน, Stock Days, After Stock Days (อิง baseData ทั้งชุดที่ผ่านฟิลเตอร์แล้ว)
+    let total_usage_4m_base = 0;
+    let totalStock_base = 0;
+    let totalReturnValue_base = 0;
+
+    baseData.forEach(r => {
+        if (r.Qty6Month > 0) {
+            totalStock_base += r.Value;
+            totalReturnValue_base += r.ReturnValue;
+            if (r.Unrestricted > 0) {
+                const unit_price = r.Value / r.Unrestricted;
+                total_usage_4m_base += r.Qty4Month * unit_price;
             }
         }
     });
-    const monthly_withdrawal=total_usage_4m_base/4||0;
-    const daily_usage=total_usage_4m_base/120||0;
-    const stock_days=daily_usage>0?Math.round(totalStock_base/daily_usage):'N/A';
-    const after_stock_days=daily_usage>0?Math.round((totalStock_base-totalReturnValue_base)/daily_usage):'N/A';
-    document.getElementById("monthlyWithdrawalValue").textContent=formatShortCurrency(monthly_withdrawal);
-    document.getElementById("stockDaysValue").textContent=stock_days>9999?'มาก':stock_days;
-    document.getElementById("afterStockDaysValue").textContent=after_stock_days>9999?'มาก':after_stock_days;
+
+    const monthly_withdrawal = total_usage_4m_base / 4 || 0;
+    const daily_usage        = total_usage_4m_base / 120 || 0;
+    const stock_days         = daily_usage > 0 ? Math.round(totalStock_base / daily_usage) : 'N/A';
+    const after_stock_days   = daily_usage > 0 ? Math.round((totalStock_base - totalReturnValue_base) / daily_usage) : 'N/A';
+
+    document.getElementById("monthlyWithdrawalValue").textContent = formatShortCurrency(monthly_withdrawal);
+    document.getElementById("stockDaysValue").textContent         = stock_days > 9999 ? 'มาก' : stock_days;
+    document.getElementById("afterStockDaysValue").textContent    = after_stock_days > 9999 ? 'มาก' : after_stock_days;
 }
 
 function getStatusClass(status){
