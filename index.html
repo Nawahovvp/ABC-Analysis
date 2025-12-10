@@ -270,6 +270,7 @@
             <button id="updateBtn" class="icon-btn" title="Update data" style="display:none;">
                 <i class="fas fa-database"></i>
             </button>
+             <span id="lastUpdateLabel" style="font-size:12px;color:#555;margin-left:8px;"></span>
             <a id="uploadBtn" class="export-btn" href="#" target="_blank" style="display:none; flex: 0 1 auto; margin-left: 0;"><i class="fas fa-upload"></i> Upload</a>
             <div class="control-group">
                 <label><i class="fas fa-clock control-icon"></i> Lead Time:</label>
@@ -396,6 +397,20 @@ const inventoryUrls = {
     '0326': 'https://opensheet.elk.sh/1gtZLR5Tm574o5xRbdrRm9yFzRukGx_UAzUnoah36cxQ/Sheet1',
     '0366': 'https://opensheet.elk.sh/1NtRsaxPkeNb4sAcTm-Tn4oN-o5F6z_56S1nhTg7kvBc/Sheet1',
     '0369': 'https://opensheet.elk.sh/13NYKhEWkWLLnA2DZZEP-zZEz2r33-roUDPMSWoFR3Qk/Sheet1'
+};
+const lastUpdateApiBase = 'https://script.google.com/macros/s/AKfycbxwPojlkzA-QBknRpN6GIiuwxJo5cyBsVGgXQwneGenfsvSz9YuzuoNf2ZsrtxoKypE3Q/exec';
+
+const lastUpdateApiByPlant = {
+    '0304': `${lastUpdateApiBase}?id=1miQgObvPdIocjf2Mwn-GZxRvDZy0R5gIl1zhxMWvM-E`,
+    '0309': `${lastUpdateApiBase}?id=1ntRtlRIndxgEZ3udnh7Nj8LSQiaUdAeAg5j8qd_z8sA`,
+    '0311': `${lastUpdateApiBase}?id=1OKDdqLY_TOjjfLJ58xFiq-WHIDbMrxMcDho6FO5Rq8o`,
+    '0312': `${lastUpdateApiBase}?id=1ilYbVsCqA1cSoUnZwwULCmPkdakobICkyq5JpBJyyAU`,
+    '0313': `${lastUpdateApiBase}?id=12FSbkYSB1zi6xo2WGAsM0jFyp3IkIywLFVF0Zn2axpE`,
+    '0319': `${lastUpdateApiBase}?id=1pYJsp3ZVSwQ1h_Ayqp3BrMTsm-ZtLREU03Qw5WUtgAw`,
+    '0320': `${lastUpdateApiBase}?id=1V5uhH1wekza4FLN2VqtVBfgIA1sbTY_mqq4ohnTmW_M`,
+    '0326': `${lastUpdateApiBase}?id=1gtZLR5Tm574o5xRbdrRm9yFzRukGx_UAzUnoah36cxQ`,
+    '0366': `${lastUpdateApiBase}?id=1NtRsaxPkeNb4sAcTm-Tn4N-o5F6z_56S1nhTg7kvBc`,
+    '0369': `${lastUpdateApiBase}?id=13NYKhEWkWLLnA2DZZEP-zZEz2r33-roUDPMSWoFR3Qk`
 };
 const sheetIds = {};
 Object.keys(inventoryUrls).forEach(plant => {
@@ -790,6 +805,38 @@ async function loadData(){
         } else {
             updateBtn.style.display = "none";
         }
+        // ✅ แสดงเวลาอัปเดตล่าสุด
+const lastLabel = document.getElementById("lastUpdateLabel");
+lastLabel.textContent = "";  // เคลียร์ก่อน
+
+const apiUrl = lastUpdateApiByPlant[selectedPlant];
+if (apiUrl) {
+    lastLabel.textContent = "กำลังตรวจสอบเวลาอัปเดต...";
+    fetch(apiUrl)
+        .then(res => res.json())
+        .then(data => {
+            if (data.modifiedTime) {
+                const dt = new Date(data.modifiedTime);
+                // แสดงเป็นรูปแบบไทย
+                const thTime = dt.toLocaleString('th-TH', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                lastLabel.textContent = `อัปเดตล่าสุด: ${thTime}`;
+            } else {
+                lastLabel.textContent = "";
+            }
+        })
+        .catch(err => {
+            console.error('Error fetch modifiedTime', err);
+            lastLabel.textContent = "";
+        });
+} else {
+    lastLabel.textContent = "";
+}
 
         loader.style.display="none";
         document.getElementById("mainCardsSection").style.display="flex";
