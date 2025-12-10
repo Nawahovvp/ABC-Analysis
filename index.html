@@ -195,6 +195,36 @@
           width: 100%;
           min-width: 220px;
         }
+        /* นวนคร = ส้ม */
+.nava-orange {
+    background: #f6b26b;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+/* คงเหลือ = เขียว */
+.stock-green {
+    background: #6aa84f;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+/* คงเหลือ = 0 และ Moving = Fast = แดง */
+.stock-red {
+    background: #cc0000;
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+    display: inline-block;
+}
+
     </style>
 </head>
 <body>
@@ -1267,44 +1297,62 @@ function renderTable(){
         return;
     }
     pageData.forEach(r=>{
-        const orderQty=Math.round(r.RecommendedOrder);
-        const orderClass=orderQty===0?"order-0":orderQty<=10?"order-1-10":orderQty<=50?"order-11-50":orderQty<=200?"order-51-200":"order-200";
-        const statusClass=getStatusClass(r.Status);
-        const displayStatus=r.Status&&r.Status.trim()!==''?r.Status:"-";
-        const ownerDisplay=r.OwnerName||(r.OwnerId||"-");
-        const row=document.createElement("tr");
-        row.innerHTML=`
-            <td>${r.Plant}</td>
-            <td>${r.Material}</td>
-            <td>${r.Description}</td>
-            <td>${r.StorageBin}</td>
-            <td>${r.Unit}</td>
-            <td>${formatNumber(r.Navanakorn || 0)}</td>
-            <td>${formatNumber(r.Unrestricted)}</td>
-            <td><span class="value">${formatCurrency(r.Value)}</span></td>
-            <td>${formatNumber(r.Qty6Month)}</td>
-            <td>${formatNumber(r.Qty4Month)}</td>
-            <td>${r.AvgMonthly.toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
-            <td>${formatNumber(r.ThirtyDay)}</td>
-            <td>${r.Mean.toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
-            <td>${formatNumber(r.SafetyStock)}</td>
-            <td>${formatNumber(r.ROP)}</td>
-            <td>${r.DOS>9999?'มาก':r.DOS.toFixed(1)}</td>
-            <td><span class="${orderClass}">${formatNumber(orderQty)}</span></td>
-            <td>${r.Note}</td>
-            <td>${formatNumber(r.MultiplyUnit)}</td>
-            <td>${r.Product}</td>
-            <td><strong>${r.ABCValue}</strong></td>
-            <td><span class="moving-${r.Moving.toLowerCase()}">${r.Moving}</span></td>
-            <td><span class="return-qty">${formatNumber(r.ReturnQty)}</span></td>
-            <td>${r.CumPercent.toFixed(1)}%</td>
-            <td class="col-location">${r.Location||''}</td>
-            <td class="col-shelf">${r.Shelf||''}</td>
-            <td class="responsible-cell"><span class="responsible-user">${ownerDisplay}</span></td>
-            <td><span class="${statusClass}">${displayStatus}</span></td>
-        `;
-        container.appendChild(row);
-    });
+    const orderQty=Math.round(r.RecommendedOrder);
+    const orderClass=orderQty===0?"order-0":orderQty<=10?"order-1-10":orderQty<=50?"order-11-50":orderQty<=200?"order-51-200":"order-200";
+    const statusClass=getStatusClass(r.Status);
+    const displayStatus=r.Status&&r.Status.trim()!==''?r.Status:"-";
+    const ownerDisplay=r.OwnerName||(r.OwnerId||"-");
+
+    // 🟧 นวนคร สีส้ม
+    const navanakornHtml = `
+        <span class="nava-orange">${formatNumber(r.Navanakorn || 0)}</span>
+    `;
+
+    // 🟩🟥 คงเหลือ
+    let stockClass = "stock-green"; 
+    if (r.Unrestricted == 0 && r.Moving === "Fast") {
+        stockClass = "stock-red";
+    }
+    const unrestrictedHtml = `
+        <span class="${stockClass}">${formatNumber(r.Unrestricted)}</span>
+    `;
+
+    const row=document.createElement("tr");
+    row.innerHTML=`
+        <td>${r.Plant}</td>
+        <td>${r.Material}</td>
+        <td>${r.Description}</td>
+        <td>${r.StorageBin}</td>
+        <td>${r.Unit}</td>
+
+        <!-- 🔥 ใช้รูปแบบสี -->
+        <td>${navanakornHtml}</td>
+        <td>${unrestrictedHtml}</td>
+
+        <td><span class="value">${formatCurrency(r.Value)}</span></td>
+        <td>${formatNumber(r.Qty6Month)}</td>
+        <td>${formatNumber(r.Qty4Month)}</td>
+        <td>${r.AvgMonthly.toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+        <td>${formatNumber(r.ThirtyDay)}</td>
+        <td>${r.Mean.toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+        <td>${formatNumber(r.SafetyStock)}</td>
+        <td>${formatNumber(r.ROP)}</td>
+        <td>${r.DOS>9999?'มาก':r.DOS.toFixed(1)}</td>
+        <td><span class="${orderClass}">${formatNumber(orderQty)}</span></td>
+        <td>${r.Note}</td>
+        <td>${formatNumber(r.MultiplyUnit)}</td>
+        <td>${r.Product}</td>
+        <td><strong>${r.ABCValue}</strong></td>
+        <td><span class="moving-${r.Moving.toLowerCase()}">${r.Moving}</span></td>
+        <td><span class="return-qty">${formatNumber(r.ReturnQty)}</span></td>
+        <td>${r.CumPercent.toFixed(1)}%</td>
+        <td class="col-location">${r.Location||''}</td>
+        <td class="col-shelf">${r.Shelf||''}</td>
+        <td class="responsible-cell"><span class="responsible-user">${ownerDisplay}</span></td>
+        <td><span class="${statusClass}">${displayStatus}</span></td>
+    `;
+    container.appendChild(row);
+});
 }
 
 function renderPagination(){
