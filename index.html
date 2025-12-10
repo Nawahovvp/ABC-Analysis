@@ -31,18 +31,22 @@
         .slow { background: linear-gradient(135deg, #fab1a0, #e17055); }
         .slowly { background: linear-gradient(135deg, #dfe6e9, #b2bec3); }
         .dead { background: linear-gradient(135deg, #b2bec3, #636e72); }
+
         .controls { padding: 20px; background: #fff; display: flex; flex-direction: column; gap: 15px; border-bottom: 1px solid #eee; }
         .filter-row { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
         .search-row { display: flex; gap: 15px; align-items: center; width: 100%; flex-wrap: wrap; }
+
         .control-group { display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #f0f4ff, #e0eaff); padding: 12px 20px; border-radius: 16px; font-size: 14px; box-shadow: 0 4px 10px rgba(102, 126, 234, 0.1); transition: all 0.3s; }
         .control-group:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(102, 126, 234, 0.2); }
         .control-icon { font-size: 18px; color: #667eea; }
+
         label { font-weight: 600; color: #2c3e50; display: flex; align-items: center; gap: 5px; }
         select, input[type=number], input[type=text] { padding: 10px 14px; border-radius: 10px; border: 1px solid #ccd1ff; font-size: 14px; background: white; transition: border 0.2s; width: 80px; }
         select { width: 120px; }
         input[type=text] { width: 250px; }
         select:focus, input[type=number]:focus, input[type=text]:focus { border-color: #667eea; outline: none; }
         .unit { font-size: 14px; color: #667eea; font-weight: 500; }
+
         .export-btn { padding: 12px; background: linear-gradient(135deg, #27ae60, #1e8449); color: white; border: none; border-radius: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 6px 15px rgba(39,174,96,0.4); transition: all 0.3s; flex: 0 1 auto; margin-left: auto; }
         .icon-btn {
             width: 40px;
@@ -65,29 +69,36 @@
         .icon-btn i {
             font-size: 18px;
         }
+
         .table-container { overflow: auto; max-height: 70vh; position: relative; padding: 0 16px; }
         table { width: 100%; border-collapse: collapse; min-width: 1600px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); background: white; }
         thead { position: sticky; top: 0; z-index: 10; background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         th { padding: 14px 10px; text-align: left; font-size: 13px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         th:hover { background: rgba(255,255,255,0.1); }
         .sort-icon { margin-left: 4px; font-size: 10px; }
+
         tbody tr { transition: background 0.2s; border-bottom: 1px solid #eee; }
         tbody tr:hover { background: #f0f8ff; }
         tbody tr:nth-child(even) { background: #f8f9fa; }
         td { padding: 12px 10px; font-size: 13px; text-align: left; }
+
         .value { background: #667eea; color: white; padding: 4px 8px; border-radius: 8px; font-weight: bold; font-size: 12px; display: inline-block; }
+
         .order-0 { color: #95a5a6; }
         .order-1-10 { background: #d5f5e3; color: #1e8449; padding: 4px 8px; border-radius: 6px; display: inline-block; }
         .order-11-50 { background: #fef9e7; color: #d35400; padding: 4px 8px; border-radius: 6px; display: inline-block; }
         .order-51-200 { background: #fdecea; color: #c0392b; padding: 4px 8px; border-radius: 6px; display: inline-block; }
         .order-200 { background: #fadbd8; color: #c0392b; padding: 4px 8px; border-radius: 6px; font-weight: bold; display: inline-block; }
+
         .moving-fast, .moving-medium, .moving-slow, .moving-slowly, .moving-dead { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; display: inline-block; }
         .moving-fast { background: #d5f5e3; color: #1e8449; }
         .moving-medium { background: #fef9e7; color: #d35400; }
         .moving-slow { background: #fdecea; color: #c0392b; }
         .moving-slowly { background: #f2f3f4; color: #616161; }
         .moving-dead { background: #f0f0f0; color: #7f8c8d; }
+
         .return-qty { background: #e74c3c; color: white; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
+
         .status-pending { background: #fef9e7; color: #d35400; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
         .status-approved { background: #d5f5e3; color: #1e8449; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
         .status-rejected { background: #fdecea; color: #c0392b; padding: 4px 8px; border-radius: 6px; display: inline-block; font-weight: bold; }
@@ -130,7 +141,12 @@
 
         .loader { --w:10ch; font-weight: bold; font-family: monospace; font-size: 30px; letter-spacing: var(--w); width: var(--w); overflow: hidden; white-space: nowrap; text-shadow: calc(-1*var(--w)) 0, calc(-2*var(--w)) 0, calc(-3*var(--w)) 0, calc(-4*var(--w)) 0, calc(-5*var(--w)) 0, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0, calc(-8*var(--w)) 0, calc(-9*var(--w)) 0; animation: l16 2s infinite; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; }
         .loader:before { content: "Loading..."; }
-        @keyframes l16 { 20% { text-shadow: calc(-1*var(--w)) 0, calc(-2*var(--w)) 0 red, calc(-3*var(--w)) 0, calc(-4*var(--w)) 0 #ffa516, calc(-5*var(--w)) 0 #63fff4, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0, calc(-8*var(--w)) 0 green, calc(-9*var(--w)) 0; } 40% { text-shadow: calc(-1*var(--w)) 0, calc(-2*var(--w)) 0 red, calc(-3*var(--w)) 0 #e945e9, calc(-4*var(--w)) 0, calc(-5*var(--w)) 0 green, calc(-6*var(--w)) 0 orange, calc(-7*var(--w)) 0, calc(-8*var(--w)) 0 green, calc(-9*var(--w)) 0; } 60% { text-shadow: calc(-1*var(--w)) 0 lightblue, calc(-2*var(--w)) 0, calc(-3*var(--w)) 0 #e945e9, calc(-4*var(--w)) 0, calc(-5*var(--w)) 0 green, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0 yellow, calc(-8*var(--w)) 0 #ffa516, calc(-9*var(--w)) 0 red; } 80% { text-shadow: calc(-1*var(--w)) 0 lightblue, calc(-2*var(--w)) 0 yellow, calc(-3*var(--w)) 0 #63fff4, calc(-4*var(--w)) 0 #ffa516, calc(-5*var(--w)) 0 red, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0 grey, calc(-8*var(--w)) 0 #63fff4, calc(-9*var(--w)) 0; } }
+        @keyframes l16 {
+            20% { text-shadow: calc(-1*var(--w)) 0, calc(-2*var(--w)) 0 red, calc(-3*var(--w)) 0, calc(-4*var(--w)) 0 #ffa516, calc(-5*var(--w)) 0 #63fff4, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0, calc(-8*var(--w)) 0 green, calc(-9*var(--w)) 0; }
+            40% { text-shadow: calc(-1*var(--w)) 0, calc(-2*var(--w)) 0 red, calc(-3*var(--w)) 0 #e945e9, calc(-4*var(--w)) 0, calc(-5*var(--w)) 0 green, calc(-6*var(--w)) 0 orange, calc(-7*var(--w)) 0, calc(-8*var(--w)) 0 green, calc(-9*var(--w)) 0; }
+            60% { text-shadow: calc(-1*var(--w)) 0 lightblue, calc(-2*var(--w)) 0, calc(-3*var(--w)) 0 #e945e9, calc(-4*var(--w)) 0, calc(-5*var(--w)) 0 green, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0 yellow, calc(-8*var(--w)) 0 #ffa516, calc(-9*var(--w)) 0 red; }
+            80% { text-shadow: calc(-1*var(--w)) 0 lightblue, calc(-2*var(--w)) 0 yellow, calc(-3*var(--w)) 0 #63fff4, calc(-4*var(--w)) 0 #ffa516, calc(-5*var(--w)) 0 red, calc(-6*var(--w)) 0, calc(-7*var(--w)) 0 grey, calc(-8*var(--w)) 0 #63fff4, calc(-9*var(--w)) 0; }
+        }
 
         #backBtn { position: absolute; top: 20px; left: 20px; background: none; border: none; font-size: 24px; color: white; cursor: pointer; display: none; }
 
@@ -195,36 +211,134 @@
           width: 100%;
           min-width: 220px;
         }
+
         /* นวนคร = ส้ม */
-.nava-orange {
-    background: #f6b26b;
-    color: #ffffff;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: bold;
-    display: inline-block;
-}
+        .nava-orange {
+            background: #f6b26b;
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+        }
 
-/* คงเหลือ = เขียว */
-.stock-green {
-    background: #6aa84f;
-    color: #ffffff;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: bold;
-    display: inline-block;
-}
+        /* คงเหลือ = เขียว */
+        .stock-green {
+            background: #6aa84f;
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+        }
 
-/* คงเหลือ = 0 และ Moving = Fast = แดง */
-.stock-red {
-    background: #cc0000;
-    color: #ffffff;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: bold;
-    display: inline-block;
-}
+        /* คงเหลือ = 0 และ Moving = Fast = แดง */
+        .stock-red {
+            background: #cc0000;
+            color: #ffffff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+        }
 
+        /* ==================== RESPONSIVE ==================== */
+
+        /* Tablet ลงมา */
+        @media (max-width: 1200px) {
+            body {
+                padding: 0;
+            }
+            .container {
+                max-width: 100%;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            h1 {
+                font-size: 22px;
+                padding: 14px;
+            }
+            .summary-row {
+                padding: 10px;
+                gap: 8px;
+            }
+            .card {
+                max-width: none;
+                flex: 1 1 calc(50% - 10px); /* 2 คอลัมน์ */
+            }
+            .controls {
+                padding: 12px;
+                gap: 10px;
+            }
+            .control-group {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+            .control-group label {
+                width: 100%;
+                margin-bottom: 4px;
+            }
+            .control-group select,
+            .control-group input[type=number],
+            .control-group input[type=text] {
+                width: 100% !important;
+            }
+            .export-btn {
+                margin-left: 0;
+            }
+            .search-row,
+            .filter-row {
+                gap: 10px;
+            }
+            #responsibleFilterContainer {
+                width: 100%;
+            }
+        }
+
+        /* มือถือ */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 18px;
+            }
+            .summary-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .card {
+                flex: 1 1 100%; /* 1 คอลัมน์ */
+            }
+            .export-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            .icon-btn {
+                margin-left: 0;
+            }
+            table {
+                min-width: 1000px; /* ลดลงนิดให้เลื่อนง่ายขึ้นบนมือถือ */
+            }
+            th, td {
+                padding: 8px 6px;
+                font-size: 12px;
+            }
+        }
+
+        /* จอเล็กมาก */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 16px;
+                padding: 10px;
+            }
+            .login-form {
+                width: 260px;
+                padding: 20px;
+            }
+            .page-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -300,7 +414,7 @@
             <button id="updateBtn" class="icon-btn" title="Update data" style="display:none;">
                 <i class="fas fa-database"></i>
             </button>
-             <span id="lastUpdateLabel" style="font-size:12px;color:#555;margin-left:8px;"></span>
+            <span id="lastUpdateLabel" style="font-size:12px;color:#555;margin-left:8px;"></span>
             <a id="uploadBtn" class="export-btn" href="#" target="_blank" style="display:none; flex: 0 1 auto; margin-left: 0;"><i class="fas fa-upload"></i> Upload</a>
             <div class="control-group">
                 <label><i class="fas fa-clock control-icon"></i> Lead Time:</label>
@@ -428,6 +542,7 @@ const inventoryUrls = {
     '0366': 'https://opensheet.elk.sh/1NtRsaxPkeNb4sAcTm-Tn4oN-o5F6z_56S1nhTg7kvBc/Sheet1',
     '0369': 'https://opensheet.elk.sh/13NYKhEWkWLLnA2DZZEP-zZEz2r33-roUDPMSWoFR3Qk/Sheet1'
 };
+
 const lastUpdateApiBase = 'https://script.google.com/macros/s/AKfycbxwPojlkzA-QBknRpN6GIiuwxJo5cyBsVGgXQwneGenfsvSz9YuzuoNf2ZsrtxoKypE3Q/exec';
 
 const lastUpdateApiByPlant = {
@@ -439,15 +554,17 @@ const lastUpdateApiByPlant = {
     '0319': `${lastUpdateApiBase}?id=1pYJsp3ZVSwQ1h_Ayqp3BrMTsm-ZtLREU03Qw5WUtgAw`,
     '0320': `${lastUpdateApiBase}?id=1V5uhH1wekza4FLN2VqtVBfgIA1sbTY_mqq4ohnTmW_M`,
     '0326': `${lastUpdateApiBase}?id=1gtZLR5Tm574o5xRbdrRm9yFzRukGx_UAzUnoah36cxQ`,
-    '0366': `${lastUpdateApiBase}?id=1NtRsaxPkeNb4sAcTm-Tn4N-o5F6z_56S1nhTg7kvBc`,
+    '0366': `${lastUpdateApiBase}?id=1NtRsaxPkeNb4sAcTm-Tn4oN-o5F6z_56S1nhTg7kvBc`,
     '0369': `${lastUpdateApiBase}?id=13NYKhEWkWLLnA2DZZEP-zZEz2r33-roUDPMSWoFR3Qk`
 };
+
 const sheetIds = {};
 Object.keys(inventoryUrls).forEach(plant => {
     const url = inventoryUrls[plant];
     const parts = url.split('/');
     sheetIds[plant] = parts[3];
 });
+
 const plantNames = {
     '0301': 'นวนคร',
     '0303': 'SA-สงขลา',
@@ -656,6 +773,7 @@ async function loadData(){
         const statusData=await statusRes.json();
         const locationData=await locationRes.json();
         const shelfData=await shelfRes.json();
+
         const navanakornMap = new Map();
         locationData.forEach(r => {
             const mat = (r.Material || '').toString().trim();
@@ -784,37 +902,33 @@ async function loadData(){
             const ownerName=getOwnerName(ownerId);
 
             allData.push({
-    Plant:plant,
-    Material:material,
-    Description:description,
-    StorageBin:storageBin,
-    Unit:unit,
-
-    // ✅ เพิ่มบรรทัดนี้
-    Navanakorn: navanakornQty,
-
-    Unrestricted:unrestricted,
-    Value:value,
-    Qty6Month:qty6m,
-    Qty4Month:qty4m,
-    ThirtyDay:thirtyDay,
-    AvgDailyUse:qty4m/120||0,
-    AvgMonthly:qty4m/4,
-    SafetyStock:0,ROP:0,DOS:0,RecommendedOrder:0,Mean:0,
-    ABCValue:"",CumPercent:0,Moving:"",
-    ReturnQty:0,ReturnValue:0,
-    Note:main.Note,
-    MultiplyUnit:main.MultiplyUnit,
-    Product:main.Product,
-    AvgVal:avgVal,
-    OriginalValue:originalValue,
-    Status:status,
-    Location:location,
-    Shelf:shelf,
-    OwnerId:ownerId,
-    OwnerName:ownerName
-});
-
+                Plant:plant,
+                Material:material,
+                Description:description,
+                StorageBin:storageBin,
+                Unit:unit,
+                Navanakorn: navanakornQty,
+                Unrestricted:unrestricted,
+                Value:value,
+                Qty6Month:qty6m,
+                Qty4Month:qty4m,
+                ThirtyDay:thirtyDay,
+                AvgDailyUse:qty4m/120||0,
+                AvgMonthly:qty4m/4,
+                SafetyStock:0,ROP:0,DOS:0,RecommendedOrder:0,Mean:0,
+                ABCValue:"",CumPercent:0,Moving:"",
+                ReturnQty:0,ReturnValue:0,
+                Note:main.Note,
+                MultiplyUnit:main.MultiplyUnit,
+                Product:main.Product,
+                AvgVal:avgVal,
+                OriginalValue:originalValue,
+                Status:status,
+                Location:location,
+                Shelf:shelf,
+                OwnerId:ownerId,
+                OwnerName:ownerName
+            });
         });
 
         calcABCValue();
@@ -824,6 +938,7 @@ async function loadData(){
         const name=plantNames[selectedPlant]||selectedPlant;
         plantFilter.add(new Option(`${selectedPlant} - ${name}`,selectedPlant));
         plantFilter.disabled=true;
+
         const updateBtn = document.getElementById("updateBtn");
         if (sheetIds[selectedPlant]) {
             updateBtn.style.display = "inline-flex";
@@ -835,38 +950,37 @@ async function loadData(){
         } else {
             updateBtn.style.display = "none";
         }
-        // ✅ แสดงเวลาอัปเดตล่าสุด
-const lastLabel = document.getElementById("lastUpdateLabel");
-lastLabel.textContent = "";  // เคลียร์ก่อน
 
-const apiUrl = lastUpdateApiByPlant[selectedPlant];
-if (apiUrl) {
-    lastLabel.textContent = "กำลังตรวจสอบเวลาอัปเดต...";
-    fetch(apiUrl)
-        .then(res => res.json())
-        .then(data => {
-            if (data.modifiedTime) {
-                const dt = new Date(data.modifiedTime);
-                // แสดงเป็นรูปแบบไทย
-                const thTime = dt.toLocaleString('th-TH', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+        // เวลาอัปเดตล่าสุด
+        const lastLabel = document.getElementById("lastUpdateLabel");
+        lastLabel.textContent = "";
+        const apiUrl = lastUpdateApiByPlant[selectedPlant];
+        if (apiUrl) {
+            lastLabel.textContent = "กำลังตรวจสอบเวลาอัปเดต...";
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.modifiedTime) {
+                        const dt = new Date(data.modifiedTime);
+                        const thTime = dt.toLocaleString('th-TH', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        lastLabel.textContent = `อัปเดตล่าสุด: ${thTime}`;
+                    } else {
+                        lastLabel.textContent = "";
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetch modifiedTime', err);
+                    lastLabel.textContent = "";
                 });
-                lastLabel.textContent = `อัปเดตล่าสุด: ${thTime}`;
-            } else {
-                lastLabel.textContent = "";
-            }
-        })
-        .catch(err => {
-            console.error('Error fetch modifiedTime', err);
+        } else {
             lastLabel.textContent = "";
-        });
-} else {
-    lastLabel.textContent = "";
-}
+        }
 
         loader.style.display="none";
         document.getElementById("mainCardsSection").style.display="flex";
@@ -941,7 +1055,6 @@ function recalculateStockFields(data,params){
     });
 }
 
-/* NEW: สร้างตัวเลือก Filter ผู้รับคืน จากชุดข้อมูลที่ส่งมา */
 function populateOwnerFilter(dataList){
     const sel=document.getElementById("responsibleFilter");
     const current=sel.value;
@@ -1014,12 +1127,9 @@ document.getElementById("tableHeader").addEventListener("click",e=>{
     applyFiltersAndRender();
 });
 
-/* ปรับให้ Filter ผู้รับคืนอ้างอิงชุดข้อมูลตาม Card ที่กด */
 function applyFiltersAndRender(){
-    // 1) เริ่มจากข้อมูลทั้งหมดของ Plant ที่โหลดมาแล้ว
     let data = [...allData];
 
-    // 2) ค้นหา (Material / Description)
     const search = document.getElementById("searchInput").value.toLowerCase();
     if (search) {
         data = data.filter(r =>
@@ -1028,7 +1138,6 @@ function applyFiltersAndRender(){
         );
     }
 
-    // 3) Filter Status
     const statusVal = document.getElementById("statusFilter").value;
     if (statusVal) {
         if (statusVal === "ไม่มีสถานะ") {
@@ -1038,7 +1147,6 @@ function applyFiltersAndRender(){
         }
     }
 
-    // 4) คำนวณ stock fields ตาม LeadTime / Safety / Cover
     const params = {
         leadTime: parseInt(document.getElementById("leadTimeDays").value) || 5,
         safety:   parseInt(document.getElementById("safetyDays").value) || 3,
@@ -1046,13 +1154,9 @@ function applyFiltersAndRender(){
     };
     recalculateStockFields(data, params);
 
-    // baseData = ชุดข้อมูลที่ใช้คำนวณการ์ดหลัก (หลังจากฟิลเตอร์ต่างๆ + ผู้รับผิดชอบ)
     let baseData = [...data];
-
-    // viewData = ชุดข้อมูลที่ใช้แสดงในตาราง (จะถูกกรองตามโหมด + ABC/Moving)
     let viewData = [...data];
 
-    // 5) กรองตามโหมด Card (Total / Order / OverStock)
     if (mode === "onlyOrder") {
         viewData = viewData.filter(r => Math.round(r.RecommendedOrder) >= 1);
     } else if (mode === "returnable") {
@@ -1065,10 +1169,8 @@ function applyFiltersAndRender(){
         }));
     }
 
-    // 6) สร้างตัวเลือก Filter "ผู้รับคืน" จากข้อมูลตามโหมด (แต่ยังไม่กรอง Owner)
     populateOwnerFilter(viewData);
 
-    // 7) กรองตาม Owner (ผู้รับคืน) ให้มีผลทั้งกับ baseData และ viewData
     const ownerVal = document.getElementById("responsibleFilter").value;
     if (ownerVal) {
         if (ownerVal === "__EMPTY__") {
@@ -1080,17 +1182,14 @@ function applyFiltersAndRender(){
         }
     }
 
-    // 8) คำนวณ ABC สำหรับชุดข้อมูลปัจจุบัน "หลังจาก" กรอง Owner แล้ว
     if (mode === "onlyOrder") {
         calcABCForMode(viewData, "order");
     } else if (mode === "returnable") {
         calcABCForMode(viewData, "return");
     } else {
-        // โหมดปกติ ใช้ Value รวมทั้งชุด
         calcABCForMode(viewData, "normal");
     }
 
-    // 9) กรองต่อด้วย Card ABC / Moving ถ้ามีการเลือก
     if (abcFilter) {
         viewData = viewData.filter(r => r.ABCValue === abcFilter);
     }
@@ -1098,12 +1197,10 @@ function applyFiltersAndRender(){
         viewData = viewData.filter(r => r.Moving === movingFilter);
     }
 
-    // 10) ในโหมด all (มุมมองรวม) ถ้าไม่ได้กด ABC/Moving ให้ตัดตัวที่ไม่มีการเคลื่อนไหว 6 เดือนออก
     if (mode === "all" && abcFilter === "" && movingFilter === "") {
         viewData = viewData.filter(r => r.Qty6Month > 0);
     }
 
-    // 11) เซ็ต filteredData สำหรับตาราง แล้ว sort ตามหัวคอลัมน์
     filteredData = [...viewData];
     filteredData.sort((a, b) => {
         let x = a[sortKey] || 0;
@@ -1116,8 +1213,6 @@ function applyFiltersAndRender(){
     currentPage = 1;
     renderTable();
     renderPagination();
-
-    // 12) อัปเดตการ์ดทั้งหมด โดยใช้ baseData (ชุดใหญ่หลังฟิลเตอร์) + filteredData (ชุดที่แสดงบนตาราง)
     updateAllCards(baseData, filteredData);
 }
 
@@ -1154,14 +1249,11 @@ function calcABCForMode(data,modeType){
 }
 
 function updateAllCards(baseData, filteredData) {
-    // 1) สรุป ABC และ Moving จากข้อมูลที่ "แสดงอยู่จริงบนตาราง"
     const abc = { A:0, B:0, C:0 }, cntABC = { A:0, B:0, C:0 };
     const mov = { Fast:0, Medium:0, Slow:0, Slowly:0, Dead:0 },
           cntMov = { Fast:0, Medium:0, Slow:0, Slowly:0, Dead:0 };
 
     filteredData.forEach(r => {
-        // ✅ เดิมตัดตัว Qty6Month <= 0 ออก ทำให้ยอดการ์ดไม่เท่าตารางในบางกรณี
-        // ถ้าต้องการให้เฉพาะโหมด all ใช้เงื่อนไขนี้ ให้เช็ค mode แทน:
         if (mode === "all" && r.Qty6Month <= 0) return;
 
         let valueToUse = 0;
@@ -1184,7 +1276,6 @@ function updateAllCards(baseData, filteredData) {
         }
     });
 
-    // อัปเดตการ์ด A/B/C
     document.getElementById("sumA").textContent   = formatShortCurrency(abc.A);
     document.getElementById("sumB").textContent   = formatShortCurrency(abc.B);
     document.getElementById("sumC").textContent   = formatShortCurrency(abc.C);
@@ -1192,7 +1283,6 @@ function updateAllCards(baseData, filteredData) {
     document.getElementById("countB").textContent = cntABC.B + " รายการ";
     document.getElementById("countC").textContent = cntABC.C + " รายการ";
 
-    // อัปเดตการ์ด Moving
     document.getElementById("valFast").textContent   = formatShortCurrency(mov.Fast);
     document.getElementById("valMedium").textContent = formatShortCurrency(mov.Medium);
     document.getElementById("valSlow").textContent   = formatShortCurrency(mov.Slow);
@@ -1204,7 +1294,6 @@ function updateAllCards(baseData, filteredData) {
     document.getElementById("countSlowly").textContent = cntMov.Slowly + " รายการ";
     document.getElementById("countDead").textContent   = cntMov.Dead   + " รายการ";
 
-    // 2) การ์ดหลัก (มูลค่ารวม / Order / OverStock) ใช้ baseData
     let dataForMainCards;
     if (mode === "onlyOrder") {
         dataForMainCards = baseData.filter(r => Math.round(r.RecommendedOrder) >= 1);
@@ -1249,7 +1338,6 @@ function updateAllCards(baseData, filteredData) {
     document.getElementById("returnItemCount").textContent = returnCount + " รายการ";
     document.getElementById("returnValue").textContent     = formatShortCurrency(totalReturnValue);
 
-    // 3) เบิก/เดือน, Stock Days, After Stock Days (อิง baseData ทั้งชุดที่ผ่านฟิลเตอร์แล้ว)
     let total_usage_4m_base = 0;
     let totalStock_base = 0;
     let totalReturnValue_base = 0;
@@ -1297,62 +1385,57 @@ function renderTable(){
         return;
     }
     pageData.forEach(r=>{
-    const orderQty=Math.round(r.RecommendedOrder);
-    const orderClass=orderQty===0?"order-0":orderQty<=10?"order-1-10":orderQty<=50?"order-11-50":orderQty<=200?"order-51-200":"order-200";
-    const statusClass=getStatusClass(r.Status);
-    const displayStatus=r.Status&&r.Status.trim()!==''?r.Status:"-";
-    const ownerDisplay=r.OwnerName||(r.OwnerId||"-");
+        const orderQty=Math.round(r.RecommendedOrder);
+        const orderClass=orderQty===0?"order-0":orderQty<=10?"order-1-10":orderQty<=50?"order-11-50":orderQty<=200?"order-51-200":"order-200";
+        const statusClass=getStatusClass(r.Status);
+        const displayStatus=r.Status&&r.Status.trim()!==''?r.Status:"-";
+        const ownerDisplay=r.OwnerName||(r.OwnerId||"-");
 
-    // 🟧 นวนคร สีส้ม
-    const navanakornHtml = `
-        <span class="nava-orange">${formatNumber(r.Navanakorn || 0)}</span>
-    `;
+        const navanakornHtml = `
+            <span class="nava-orange">${formatNumber(r.Navanakorn || 0)}</span>
+        `;
 
-    // 🟩🟥 คงเหลือ
-    let stockClass = "stock-green"; 
-    if (r.Unrestricted == 0 && r.Moving === "Fast") {
-        stockClass = "stock-red";
-    }
-    const unrestrictedHtml = `
-        <span class="${stockClass}">${formatNumber(r.Unrestricted)}</span>
-    `;
+        let stockClass = "stock-green";
+        if (r.Unrestricted == 0 && r.Moving === "Fast") {
+            stockClass = "stock-red";
+        }
+        const unrestrictedHtml = `
+            <span class="${stockClass}">${formatNumber(r.Unrestricted)}</span>
+        `;
 
-    const row=document.createElement("tr");
-    row.innerHTML=`
-        <td>${r.Plant}</td>
-        <td>${r.Material}</td>
-        <td>${r.Description}</td>
-        <td>${r.StorageBin}</td>
-        <td>${r.Unit}</td>
-
-        <!-- 🔥 ใช้รูปแบบสี -->
-        <td>${navanakornHtml}</td>
-        <td>${unrestrictedHtml}</td>
-
-        <td><span class="value">${formatCurrency(r.Value)}</span></td>
-        <td>${formatNumber(r.Qty6Month)}</td>
-        <td>${formatNumber(r.Qty4Month)}</td>
-        <td>${r.AvgMonthly.toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
-        <td>${formatNumber(r.ThirtyDay)}</td>
-        <td>${r.Mean.toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
-        <td>${formatNumber(r.SafetyStock)}</td>
-        <td>${formatNumber(r.ROP)}</td>
-        <td>${r.DOS>9999?'มาก':r.DOS.toFixed(1)}</td>
-        <td><span class="${orderClass}">${formatNumber(orderQty)}</span></td>
-        <td>${r.Note}</td>
-        <td>${formatNumber(r.MultiplyUnit)}</td>
-        <td>${r.Product}</td>
-        <td><strong>${r.ABCValue}</strong></td>
-        <td><span class="moving-${r.Moving.toLowerCase()}">${r.Moving}</span></td>
-        <td><span class="return-qty">${formatNumber(r.ReturnQty)}</span></td>
-        <td>${r.CumPercent.toFixed(1)}%</td>
-        <td class="col-location">${r.Location||''}</td>
-        <td class="col-shelf">${r.Shelf||''}</td>
-        <td class="responsible-cell"><span class="responsible-user">${ownerDisplay}</span></td>
-        <td><span class="${statusClass}">${displayStatus}</span></td>
-    `;
-    container.appendChild(row);
-});
+        const row=document.createElement("tr");
+        row.innerHTML=`
+            <td>${r.Plant}</td>
+            <td>${r.Material}</td>
+            <td>${r.Description}</td>
+            <td>${r.StorageBin}</td>
+            <td>${r.Unit}</td>
+            <td>${navanakornHtml}</td>
+            <td>${unrestrictedHtml}</td>
+            <td><span class="value">${formatCurrency(r.Value)}</span></td>
+            <td>${formatNumber(r.Qty6Month)}</td>
+            <td>${formatNumber(r.Qty4Month)}</td>
+            <td>${r.AvgMonthly.toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+            <td>${formatNumber(r.ThirtyDay)}</td>
+            <td>${r.Mean.toLocaleString('th-TH',{minimumFractionDigits:1,maximumFractionDigits:1})}</td>
+            <td>${formatNumber(r.SafetyStock)}</td>
+            <td>${formatNumber(r.ROP)}</td>
+            <td>${r.DOS>9999?'มาก':r.DOS.toFixed(1)}</td>
+            <td><span class="${orderClass}">${formatNumber(orderQty)}</span></td>
+            <td>${r.Note}</td>
+            <td>${formatNumber(r.MultiplyUnit)}</td>
+            <td>${r.Product}</td>
+            <td><strong>${r.ABCValue}</strong></td>
+            <td><span class="moving-${r.Moving.toLowerCase()}">${r.Moving}</span></td>
+            <td><span class="return-qty">${formatNumber(r.ReturnQty)}</span></td>
+            <td>${r.CumPercent.toFixed(1)}%</td>
+            <td class="col-location">${r.Location||''}</td>
+            <td class="col-shelf">${r.Shelf||''}</td>
+            <td class="responsible-cell"><span class="responsible-user">${ownerDisplay}</span></td>
+            <td><span class="${statusClass}">${displayStatus}</span></td>
+        `;
+        container.appendChild(row);
+    });
 }
 
 function renderPagination(){
@@ -1404,7 +1487,6 @@ function exportToCSV(){
     a.click();URL.revokeObjectURL(url);
 }
 
-/* Card click events */
 document.getElementById("cardTotalStock").onclick=()=>{mode="all";abcFilter="";movingFilter="";applyFiltersAndRender();};
 document.getElementById("cardOrderItems").onclick=()=>{mode="onlyOrder";abcFilter="";movingFilter="";applyFiltersAndRender();};
 document.getElementById("cardReturnValue").onclick=()=>{mode="returnable";abcFilter="";movingFilter="";applyFiltersAndRender();};
